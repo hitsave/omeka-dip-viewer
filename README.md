@@ -2,7 +2,7 @@
 
 Omeka S module for browsing **E-ARK CSIP DIP** packages stored as `.tar` media: parse `METS.xml` inside the archive, show a file tree, image carousel and lightbox, and Video.js playback—without extracting the package to disk.
 
-Developed for [Hit Save! Archive](https://archive.hitsave.org) and used with the preservation ingest stack in [`hitsave-archiver`](https://github.com/jonasrosland/hitsave-archiver) (E-ARK DIP build + REST upload) and the [`hitsave-archive-theme`](https://github.com/jonasrosland/hitsave-archive-theme) public theme.
+Developed for [Hit Save! Archive](https://archive.hitsave.org) and used with the preservation ingest stack in [`hitsave-archiver`](https://github.com/hitsave/hitsave-archiver) (E-ARK DIP build + REST upload) and the [`hitsave-archive-theme`](https://github.com/hitsave/hitsave-archive-theme) public theme.
 
 | | |
 |---|---|
@@ -17,7 +17,7 @@ From your Omeka S root:
 
 ```bash
 cd modules
-git clone https://github.com/jonasrosland/omeka-dip-viewer.git OmekaDipViewer
+git clone https://github.com/hitsave/omeka-dip-viewer.git OmekaDipViewer
 ```
 
 In the Omeka admin UI: **Modules** → install and activate **Omeka DIP Viewer**. Configure thresholds (large package limits, gallery caps, index cache) under the module settings if needed.
@@ -44,7 +44,7 @@ Bundled front-end assets include [Video.js](https://videojs.com/) and [Embla Car
 
 ## Related projects
 
-- **Packaging / upload:** [hitsave-archiver](https://github.com/jonasrosland/hitsave-archiver) — `build-dip-e-ark.py`, `upload-dip-omeka-api.py`
-- **Theme:** [hitsave-archive-theme](https://github.com/jonasrosland/hitsave-archive-theme)
+- **Packaging / upload:** [hitsave-archiver](https://github.com/hitsave/hitsave-archiver) — `build-dip-e-ark.py`, `upload-dip-omeka-api.py`
+- **Theme:** [hitsave-archive-theme](https://github.com/hitsave/hitsave-archive-theme)
 
 This module contains **no site credentials**; configure Omeka and API keys only on your instance.
