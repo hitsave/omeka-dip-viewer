@@ -1,16 +1,22 @@
 # Config contract — single source of truth (SSOT)
 
-This module ships **no operator YAML**. Runtime tuning uses Omeka’s module settings and (optionally) a host-mounted file.
+This module ships **no operator YAML**. Tune behavior in the Omeka admin UI or rely on code defaults.
 
 ## Precedence (highest wins)
 
 | Layer | Where | Use |
 |-------|--------|-----|
-| 1 | Omeka admin → **Omeka DIP Viewer** module settings | Per-site DB settings (`omeka_dip_viewer.*`) |
-| 2 | **`/config/settings.yaml`** → `dip_viewer:` | Hit Save test/prod stacks that bind-mount [`hitsave-omeka-test` `settings.yaml`](https://github.com/hitsave/hitsave-omeka-test/blob/main/config/omeka-test/settings.example.yaml) (see that repo’s [config-contract.md](https://github.com/hitsave/hitsave-omeka-test/blob/main/docs/config-contract.md)) |
-| 3 | **`src/Service/DipConfig.php`** `DEFAULT_*` constants | Generic installs with no file mount |
+| 1 | Omeka admin → **Omeka DIP Viewer** module settings | Per-install DB settings (`omeka_dip_viewer.*`) — **operator SSOT** |
+| 2 | [`src/Service/DipConfig.php`](../src/Service/DipConfig.php) `DEFAULT_*` constants | Fallback when a setting was never saved in admin |
 
-Implementation: [`DipConfig.php`](../src/Service/DipConfig.php) (`getModuleSetting` → `loadFileConfig()` → constants).
+Implementation: each getter checks `getModuleSetting()` first, then falls back to defaults (and, for a few keys, an optional file — see below).
+
+## Optional file read (not operator SSOT)
+
+`DipConfig` can read **`dip_viewer:`** from a hard-coded path **`/config/settings.yaml`** when the corresponding **module DB setting is empty**. That path is **not** part of generic Omeka S; it exists for Hit Save Docker images that bind-mount one YAML file into the container.
+
+- **Do not** treat that mount as a second config product for this module.
+- **Hit Save** documents the mount and `dip_viewer` keys in [hitsave-omeka-test config-contract](https://github.com/hitsave/hitsave-omeka-test/blob/main/docs/config-contract.md) (`settings.yaml` is SSOT there; admin UI can still override per key once saved).
 
 ## Not owned here
 
@@ -22,5 +28,5 @@ Implementation: [`DipConfig.php`](../src/Service/DipConfig.php) (`getModuleSetti
 
 ## Anti-patterns
 
-- Adding a second `dip-viewer.yaml` in this repo — use Omeka module settings or the host `settings.yaml` `dip_viewer` block.
-- Duplicating threshold numbers in README — defaults live in `DipConfig.php`; deployment copies live in hitsave-omeka-test `settings.example.yaml`.
+- Adding module-local `dip-viewer.yaml` — use Omeka module settings.
+- Duplicating threshold numbers in README — defaults live in `DipConfig.php`.
