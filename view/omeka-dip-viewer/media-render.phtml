@@ -1,0 +1,44 @@
+<?php
+$translate = $this->plugin('translate');
+$escape = $this->plugin('escapeHtml');
+$mediaId = $media->id();
+$itemId = (int) $media->item()->id();
+$siteSlug = $siteSlug ?? null;
+?>
+<div class="omeka-dip-package">
+    <div class="omeka-dip-package__media">
+<?php if (!empty($galleryFiles)): ?>
+    <?= $this->partial('omeka-dip-viewer/partials/gallery', [
+        'galleryFiles' => $galleryFiles,
+        'galleryMaxBytes' => $galleryMaxBytes ?? 52428800,
+        'galleryMaxDisplay' => $galleryMaxDisplay ?? 48,
+        'mediaId' => $mediaId,
+        'itemId' => $itemId,
+        'siteSlug' => $siteSlug,
+    ]) ?>
+<?php endif; ?>
+<?php if (!empty($videoFiles)): ?>
+    <?= $this->partial('omeka-dip-viewer/partials/videos', [
+        'videoFiles' => $videoFiles,
+        'mediaId' => $mediaId,
+        'itemId' => $itemId,
+        'siteSlug' => $siteSlug,
+    ]) ?>
+<?php endif; ?>
+<?php if ($largePackage): ?>
+        <p class="omeka-dip-warning">
+            <?= $escape(sprintf(
+                $translate('Large DIP (%s bytes, threshold %s). Review before publishing.'),
+                number_format($dipSizeBytes),
+                number_format($thresholdBytes)
+            )) ?>
+        </p>
+<?php endif; ?>
+    </div>
+    <?= $this->partial('omeka-dip-viewer/partials/package-contents', [
+        'media' => $media,
+        'index' => $index,
+        'itemId' => $itemId,
+        'siteSlug' => $siteSlug,
+    ]) ?>
+</div>

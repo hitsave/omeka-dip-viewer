@@ -1,0 +1,42 @@
+<?php
+use OmekaDipViewer\Media\DipPackageMedia;
+
+$dipMedia = [];
+$resourceMedia = [];
+foreach ($resource->media() as $media) {
+    if (DipPackageMedia::isDipPackage($media->renderer())) {
+        $dipMedia[] = $media;
+        continue;
+    }
+    $resourceMedia[] = $media;
+}
+
+// Theme renders mediaList in full_width_main and again in right; DIP preview only once.
+$omekaDipMediaListPass = $omekaDipMediaListPass ?? 1;
+if ($dipMedia && $omekaDipMediaListPass > 1) {
+    $dipMedia = [];
+}
+?>
+<?php if ($dipMedia): ?>
+<div class="omeka-dip-resource-media-list">
+    <?php
+    $dipRenderOptions = [];
+    if (isset($this->site) && is_object($this->site) && method_exists($this->site, 'slug')) {
+        $dipRenderOptions['omeka_dip_site_slug'] = (string) $this->site->slug();
+    }
+    ?>
+    <?php foreach ($dipMedia as $media): ?>
+        <?php echo $media->render($dipRenderOptions); ?>
+    <?php endforeach; ?>
+</div>
+<?php endif; ?>
+<?php if ($resourceMedia): ?>
+<dl class="media-list">
+    <div class="property">
+        <dt><?php echo $this->translate('Media'); ?></dt>
+        <?php foreach ($resourceMedia as $media): ?>
+        <dd class="value"><?php echo $media->linkPretty(); ?></dd>
+        <?php endforeach; ?>
+    </div>
+</dl>
+<?php endif; ?>

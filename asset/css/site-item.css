@@ -1,0 +1,338 @@
+/* Hide redundant sidebar media when DIP preview is in full_width_main. */
+body.item.resource.show .right-sidebar .media-list,
+body.item.resource.show .right-sidebar .omeka-dip-resource-media-list {
+    display: none;
+}
+
+/* Package tree in theme right column (dip-layout.js moves .omeka-dip-package__contents). */
+body.item.resource.show.omeka-dip-item-layout .stack > .grid-x {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: flex-start;
+    column-gap: 1.75rem;
+}
+
+body.item.resource.show.omeka-dip-item-layout .main-with-sidebar {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+body.item.resource.show.omeka-dip-item-layout .right-sidebar.omeka-dip-package-pane {
+    display: block !important;
+    flex: 0 0 min(22rem, 34vw);
+    min-width: 12rem;
+    max-width: 26rem;
+    position: sticky;
+    top: 1rem;
+    align-self: flex-start;
+    max-height: calc(100vh - 2rem);
+    overflow: auto;
+    padding-left: 1rem;
+    border-left: 1px solid #ddd;
+    font-size: 0.88rem;
+    line-height: 1.35;
+}
+
+body.item.resource.show.omeka-dip-item-layout .omeka-dip-package__contents h4 {
+    margin: 0 0 0.5rem;
+    font-size: 1rem;
+}
+
+body.item.resource.show.omeka-dip-item-layout .omeka-dip-tree,
+body.item.resource.show.omeka-dip-item-layout .omeka-dip-file-list {
+    margin: 0;
+    padding-left: 1.1rem;
+}
+
+body.item.resource.show.omeka-dip-item-layout .omeka-dip-folder-name {
+    font-weight: 600;
+}
+
+body.item.resource.show.omeka-dip-item-layout .omeka-dip-tree .omeka-dip-tree {
+    margin-top: 0.15rem;
+}
+
+body.item.resource.show.omeka-dip-item-layout .omeka-dip-size {
+    color: #666;
+    font-size: 0.82em;
+    white-space: nowrap;
+}
+
+@media screen and (max-width: 1023px) {
+    body.item.resource.show.omeka-dip-item-layout .stack > .grid-x {
+        flex-flow: column nowrap !important;
+        align-items: stretch !important;
+    }
+
+    body.item.resource.show.omeka-dip-item-layout .stack > .grid-x > .cell {
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: 0 0 auto !important;
+    }
+
+    body.item.resource.show.omeka-dip-item-layout .main-with-sidebar {
+        order: 1;
+        flex: none !important;
+        width: 100% !important;
+        min-width: 0;
+    }
+
+    body.item.resource.show.omeka-dip-item-layout .right-sidebar.omeka-dip-package-pane {
+        order: 2;
+        flex: none !important;
+        width: 100% !important;
+        max-width: none !important;
+        position: static !important;
+        top: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        border-left: none;
+        padding-left: 0;
+        padding: 1rem 0 0;
+        margin-top: 1rem;
+        border-top: 1px solid #ddd;
+    }
+}
+
+.omeka-dip-resource-media-list {
+    margin-bottom: 1.5rem;
+}
+
+.omeka-dip-gallery {
+    margin-bottom: 1.5rem;
+}
+
+.omeka-dip-gallery-note {
+    font-size: 0.9rem;
+    color: #555;
+    margin-bottom: 0.75rem;
+}
+
+.omeka-dip-embla {
+    position: relative;
+}
+
+.omeka-dip-embla__viewport {
+    overflow: hidden;
+    cursor: grab;
+}
+
+.omeka-dip-embla--wheel .omeka-dip-embla__viewport {
+    overscroll-behavior-x: contain;
+}
+
+.omeka-dip-embla__viewport.is-dragging,
+.omeka-dip-embla.is-wheel-dragging .omeka-dip-embla__viewport {
+    cursor: grabbing;
+}
+
+.omeka-dip-embla__container {
+    display: flex;
+    touch-action: pan-y pinch-zoom;
+    margin-left: -0.5rem;
+}
+
+.omeka-dip-embla__slide {
+    flex: 0 0 11rem;
+    min-width: 0;
+    padding-left: 0.5rem;
+}
+
+.omeka-dip-embla__controls {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.omeka-dip-embla__prev:disabled,
+.omeka-dip-embla__next:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.omeka-dip-gallery-open {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #f8f8f8;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.omeka-dip-gallery-open:hover,
+.omeka-dip-gallery-open:focus-visible {
+    border-color: #1779ba;
+    outline: none;
+}
+
+.omeka-dip-gallery-thumb {
+    display: block;
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    vertical-align: middle;
+}
+
+.omeka-dip-gallery-item--collapsed {
+    display: none;
+}
+
+.omeka-dip-gallery-more-wrap {
+    margin-top: 0.75rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.omeka-dip-gallery-more-hint {
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.omeka-dip-gallery-dialog {
+    position: relative;
+    max-width: min(96vw, 1200px);
+    max-height: 96vh;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+}
+
+.omeka-dip-gallery-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.75);
+}
+
+.omeka-dip-gallery-close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 2;
+    font-size: 1.75rem;
+    line-height: 1;
+    border: none;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 0.15rem 0.5rem;
+}
+
+.omeka-dip-gallery-dialog-body {
+    margin: 0;
+    padding: 1rem;
+}
+
+.omeka-dip-gallery-full {
+    display: block;
+    max-width: 100%;
+    max-height: calc(96vh - 4rem);
+    margin: 0 auto;
+}
+
+.omeka-dip-gallery-caption {
+    margin-top: 0.5rem;
+    text-align: center;
+    font-size: 0.9rem;
+    word-break: break-word;
+}
+
+.omeka-dip-videos {
+    margin: 1.5rem 0;
+}
+
+.omeka-dip-video-note {
+    font-size: 0.9rem;
+    color: #555;
+    margin-bottom: 0.75rem;
+}
+
+.omeka-dip-video-stage {
+    margin-bottom: 1rem;
+    max-width: 44rem;
+}
+
+.omeka-dip-video-player-wrap {
+    width: 100%;
+}
+
+.omeka-dip-video-player.video-js {
+    font-size: 10px;
+}
+
+.omeka-dip-video-player.vjs-fluid {
+    width: 100%;
+    max-width: 44rem;
+}
+
+.omeka-dip-video-caption {
+    margin: 0.5rem 0 0;
+    font-weight: 600;
+    word-break: break-word;
+}
+
+.omeka-dip-video-download {
+    margin: 0.35rem 0 0;
+    font-size: 0.9rem;
+}
+
+.omeka-dip-video-embla {
+    margin-top: 0.25rem;
+}
+
+.omeka-dip-video-slide {
+    flex: 0 0 12rem;
+}
+
+.omeka-dip-video-pick {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 0;
+    border: 2px solid #ddd;
+    border-radius: 4px;
+    background: #f8f8f8;
+    cursor: pointer;
+    overflow: hidden;
+    text-align: left;
+}
+
+.omeka-dip-video-pick:hover,
+.omeka-dip-video-pick:focus-visible {
+    border-color: #1779ba;
+    outline: none;
+}
+
+.omeka-dip-video-pick.is-selected {
+    border-color: #1779ba;
+    box-shadow: 0 0 0 1px #1779ba;
+}
+
+.omeka-dip-video-pick__thumb {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 84px;
+    background: linear-gradient(145deg, #2a2a2a, #111);
+}
+
+.omeka-dip-video-pick__icon {
+    display: block;
+    width: 0;
+    height: 0;
+    margin-left: 0.2rem;
+    border-top: 14px solid transparent;
+    border-bottom: 14px solid transparent;
+    border-left: 22px solid rgba(255, 255, 255, 0.92);
+}
+
+.omeka-dip-video-pick__label {
+    display: block;
+    padding: 0.4rem 0.45rem 0.5rem;
+    font-size: 0.78rem;
+    line-height: 1.25;
+    word-break: break-word;
+    color: #222;
+}

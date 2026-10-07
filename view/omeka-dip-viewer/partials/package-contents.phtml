@@ -1,0 +1,65 @@
+<?php
+$translate = $this->plugin('translate');
+$escape = $this->plugin('escapeHtml');
+$mediaId = $media->id();
+$filesByKey = [];
+foreach ($index['files'] as $file) {
+    $filesByKey[$file['key']] = $file;
+}
+$tree = $index['tree'] ?? null;
+
+$view = $this;
+$itemId = (int) ($itemId ?? $media->item()->id());
+$renderFileLink = function (array $file, bool $showFullPath = false) use ($escape, $itemId, $mediaId, $view, $siteSlug): string {
+    $href = $view->dipFileUrl($itemId, $mediaId, $file['key'], null, $siteSlug ?? null);
+    $label = $file['label'];
+    if ($showFullPath && !empty($file['relative_path'])) {
+        $label = $file['relative_path'];
+    }
+    $html = '<a href="' . $escape($href) . '">' . $escape($label) . '</a>';
+    if (!empty($file['size'])) {
+        $html .= ' <span class="omeka-dip-size">(' . $escape(number_format((int) $file['size'])) . ' B)</span>';
+    }
+    return $html;
+};
+
+$renderTree = null;
+$renderTree = function (array $node) use (&$renderTree, $escape, $filesByKey, $renderFileLink): void {
+    $hasChildren = !empty($node['children']);
+    $hasFiles = !empty($node['files']);
+    if (!$hasChildren && !$hasFiles) {
+        return;
+    }
+    echo '<ul class="omeka-dip-tree">';
+    foreach ($node['files'] ?? [] as $fileKey) {
+        $file = $filesByKey[$fileKey] ?? null;
+        if (!$file) {
+            continue;
+        }
+        echo '<li class="omeka-dip-file">' . $renderFileLink($file) . '</li>';
+    }
+    foreach ($node['children'] ?? [] as $child) {
+        echo '<li class="omeka-dip-folder">';
+        echo '<span class="omeka-dip-folder-name">' . $escape($child['name']) . '</span>';
+        $renderTree($child);
+        echo '</li>';
+    }
+    echo '</ul>';
+};
+?>
+<aside class="omeka-dip-package__contents" aria-label="<?= $escape($translate('Package contents')) ?>">
+    <h4><?= $escape($translate('Package contents')) ?></h4>
+<?php if ($tree && (!empty($tree['children']) || !empty($tree['files']))): ?>
+    <div class="omeka-dip-tree-root">
+        <?php $renderTree($tree); ?>
+    </div>
+<?php else: ?>
+    <ul class="omeka-dip-file-list">
+        <?php foreach ($index['files'] as $file): ?>
+            <li>
+                <?= $renderFileLink($file, true) ?>
+            </li>
+        <?php endforeach; ?>
+    </ul>
+<?php endif; ?>
+</aside>

@@ -1,0 +1,12 @@
+<?php
+$translate = $this->plugin('translate');
+$escape = $this->plugin('escapeHtml');
+?>
+<div class="omeka-dip-item-packages">
+<?php foreach ($dipMedia as $media): ?>
+    <div class="omeka-dip-item-package">
+        <h3><?= $escape($media->displayTitle() ?: $media->source() ?: $translate('DIP package')) ?></h3>
+        <?= $media->render() ?>
+    </div>
+<?php endforeach; ?>
+</div>

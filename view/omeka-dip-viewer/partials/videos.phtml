@@ -1,0 +1,95 @@
+<?php
+$translate = $this->plugin('translate');
+$escape = $this->plugin('escapeHtml');
+$view = $this;
+$total = count($videoFiles);
+$playerId = 'omeka-dip-video-player-' . (int) $mediaId;
+?>
+<section class="omeka-dip-videos" aria-label="<?= $escape($translate('Video playback')) ?>" data-omeka-dip-videos>
+    <h4><?= $escape($translate('Video')) ?><?= $total > 0 ? $escape(' (' . number_format($total) . ')') : '' ?></h4>
+    <?php if ($total > 1): ?>
+        <p class="omeka-dip-video-note">
+            <?= $escape($translate('Drag or scroll over the carousel and choose a clip to play. Access copies stream in the browser; package contents lists originals for download.')) ?>
+        </p>
+    <?php endif; ?>
+    <div class="omeka-dip-video-stage">
+        <div class="omeka-dip-video-player-wrap">
+            <video-js
+                id="<?= $escape($playerId) ?>"
+                class="video-js vjs-default-skin vjs-big-play-centered omeka-dip-video-player"
+                controls
+                preload="metadata"
+                playsinline
+                data-setup="{}">
+            </video-js>
+        </div>
+        <p class="omeka-dip-video-caption" aria-live="polite"></p>
+        <p class="omeka-dip-video-download">
+            <?= $escape($translate('Download original')) ?>:
+            <a href="#" class="omeka-dip-video-download-link"></a>
+            <span class="omeka-dip-video-download-size omeka-dip-size"></span>
+        </p>
+    </div>
+    <?php if ($total > 1): ?>
+        <div class="omeka-dip-embla omeka-dip-video-embla">
+            <div class="omeka-dip-embla__viewport">
+                <div class="omeka-dip-embla__container">
+                    <?php foreach ($videoFiles as $i => $file): ?>
+                        <?php
+                        $playbackUrl = $view->dipFileUrl($itemId, $mediaId, $file['key'], 'access', $siteSlug ?? null);
+                        $downloadUrl = $view->dipFileUrl($itemId, $mediaId, $file['key'], null, $siteSlug ?? null);
+                        $label = $file['label'] ?? $file['relative_path'] ?? $file['key'];
+                        $mime = $file['access_mime'] ?? 'video/mp4';
+                        $size = (int) ($file['size'] ?? 0);
+                        $selectedClass = $i === 0 ? ' is-selected' : '';
+                        ?>
+                        <div class="omeka-dip-embla__slide omeka-dip-video-slide">
+                            <div
+                                class="omeka-dip-video-pick<?= $selectedClass ?>"
+                                role="button"
+                                tabindex="0"
+                                aria-current="<?= $i === 0 ? 'true' : 'false' ?>"
+                                data-playback-src="<?= $escape($playbackUrl) ?>"
+                                data-playback-type="<?= $escape($mime) ?>"
+                                data-download-src="<?= $escape($downloadUrl) ?>"
+                                data-label="<?= $escape($label) ?>"
+                                <?php if ($size > 0): ?>
+                                    data-size-bytes="<?= (int) $size ?>"
+                                <?php endif; ?>
+                            >
+                                <span class="omeka-dip-video-pick__thumb" aria-hidden="true">
+                                    <span class="omeka-dip-video-pick__icon"></span>
+                                </span>
+                                <span class="omeka-dip-video-pick__label"><?= $escape($label) ?></span>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            <div class="omeka-dip-embla__controls">
+                <button type="button" class="omeka-dip-embla__prev button secondary" aria-label="<?= $escape($translate('Previous')) ?>">‹</button>
+                <button type="button" class="omeka-dip-embla__next button secondary" aria-label="<?= $escape($translate('Next')) ?>">›</button>
+            </div>
+        </div>
+    <?php else: ?>
+        <?php
+        $file = $videoFiles[0];
+        $playbackUrl = $view->dipFileUrl($itemId, $mediaId, $file['key'], 'access', $siteSlug ?? null);
+        $downloadUrl = $view->dipFileUrl($itemId, $mediaId, $file['key'], null, $siteSlug ?? null);
+        $label = $file['label'] ?? $file['relative_path'] ?? $file['key'];
+        $mime = $file['access_mime'] ?? 'video/mp4';
+        $size = (int) ($file['size'] ?? 0);
+        ?>
+        <div
+            class="omeka-dip-video-pick omeka-dip-video-pick--solo is-selected"
+            hidden
+            data-playback-src="<?= $escape($playbackUrl) ?>"
+            data-playback-type="<?= $escape($mime) ?>"
+            data-download-src="<?= $escape($downloadUrl) ?>"
+            data-label="<?= $escape($label) ?>"
+            <?php if ($size > 0): ?>
+                data-size-bytes="<?= (int) $size ?>"
+            <?php endif; ?>
+        ></div>
+    <?php endif; ?>
+</section>

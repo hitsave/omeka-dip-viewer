@@ -1,0 +1,20 @@
+<?php
+$translate = $this->plugin('translate');
+?>
+<div class="field">
+    <div class="field-meta">
+        <label for="large_package_threshold_mb"><?= $translate('Large package threshold (MiB)') ?></label>
+    </div>
+    <div class="inputs">
+        <input type="number" name="large_package_threshold_mb" id="large_package_threshold_mb" value="<?= (int) $threshold_mb ?>" min="1" />
+        <p class="explanation"><?= $translate('DIP archives at or above this size are flagged (and optionally blocked).') ?></p>
+    </div>
+</div>
+<div class="field">
+    <div class="field-meta">
+        <label for="block_large_packages"><?= $translate('Block uploads at threshold') ?></label>
+    </div>
+    <div class="inputs">
+        <input type="checkbox" name="block_large_packages" id="block_large_packages" value="1" <?= $block_large ? 'checked' : '' ?> />
+    </div>
+</div>
