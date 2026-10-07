@@ -20,7 +20,7 @@ cd modules
 git clone https://github.com/hitsave/omeka-dip-viewer.git OmekaDipViewer
 ```
 
-In the Omeka admin UI: **Modules** → install and activate **Omeka DIP Viewer**. Configure thresholds (large package limits, gallery caps, index cache) under the module settings if needed.
+In the Omeka admin UI: **Modules** → install and activate **Omeka DIP Viewer**. Configure thresholds (large package limits, gallery caps, index cache) under the module settings if needed. Config precedence (module UI vs mounted YAML vs code defaults): **[docs/config-contract.md](docs/config-contract.md)**.
 
 Upload DIP `.tar` files via the **DIP package** ingester, or use an API client that registers media with ingester `omeka_dip_package` (same as the HitSave uploader).
 
