@@ -1,13 +1,13 @@
 # Omeka DIP Viewer
 
-Omeka S module for browsing **E-ARK CSIP DIP** packages stored as `.tar` media: parse `METS.xml` inside the archive, show a file tree, image carousel and lightbox, and Video.js playback—without extracting the package to disk.
+Omeka S module for browsing preservation **`.tar`** packages stored as media: **RFC 8493 BagIt** (`data/` payload + optional `metadata/inventory.json`) and legacy **E-ARK CSIP DIP** (`METS.xml`). File tree, image carousel and lightbox, and Video.js playback—without extracting the archive to disk.
 
 Developed for [Hit Save! Archive](https://archive.hitsave.org) and used with the preservation ingest stack in [`hitsave-archiver`](https://github.com/hitsave/hitsave-archiver) (E-ARK DIP build + REST upload) and the [`hitsave-archive-theme`](https://github.com/hitsave/hitsave-archive-theme) public theme.
 
 | | |
 |---|---|
 | **Omeka S** | `^4.0.0` (see `config/module.ini`) |
-| **Module version** | `0.3.31` |
+| **Module version** | `0.3.32` |
 | **Media ingester** | `omeka_dip_package` |
 | **License** | [GPL-3.0-or-later](LICENSE) |
 
@@ -37,7 +37,8 @@ Upload DIP `.tar` files via the **DIP package** ingester, or use an API client t
 Minimal METS/tar smoke test (PHP CLI, no full Omeka bootstrap):
 
 ```bash
-php test/parse_fixture.php /path/to/sample-dip.tar
+php test/parse_fixture.php test/fixtures/repcopies-s-25-scrubs.tar   # BagIt (Hit Save press)
+php test/parse_fixture.php /path/to/sample-dip.tar                   # E-ARK DIP
 ```
 
 Bundled front-end assets include [Video.js](https://videojs.com/) and [Embla Carousel](https://www.embla-carousel.com/) (see `asset/js/`, `asset/css/`).

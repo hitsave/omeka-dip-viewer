@@ -5,7 +5,7 @@ use DOMDocument;
 use DOMXPath;
 
 /**
- * Parse DIP METS (Archivematica-style or E-ARK CSIP) and index files inside a .tar (read-only).
+ * Index browseable files inside a preservation .tar (E-ARK CSIP METS or RFC 8493 BagIt).
  */
 class MetsParser
 {
@@ -22,6 +22,9 @@ class MetsParser
         }
         $this->tarMemberListing = $this->listTarMembers($tarPath);
         try {
+            if ($this->isBagItTar()) {
+                return $this->indexBagItTar($tarPath);
+            }
             $metsInnerPath = $this->findMetsPathInTar($tarPath);
             if (!$metsInnerPath) {
                 throw new \RuntimeException('No METS file found in DIP archive.');
@@ -101,6 +104,143 @@ class MetsParser
             }
         }
         throw new \RuntimeException('File not found in DIP: ' . $innerPath);
+    }
+
+    protected function isBagItTar(): bool
+    {
+        foreach ($this->getTarMemberListing('') as $member) {
+            $normalized = ltrim(str_replace('\\', '/', $member), './');
+            if ($normalized === 'bagit.txt') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @return array{mets_inner_path: string, package_uuid: ?string, package_format: string, files: array<int, array>, tree: array}
+     */
+    protected function indexBagItTar(string $tarPath): array
+    {
+        $inventoryByPath = $this->loadBagItInventory($tarPath);
+        $files = [];
+        foreach ($this->getTarMemberListing($tarPath) as $member) {
+            $normalized = ltrim(str_replace('\\', '/', $member), './');
+            if (!str_starts_with($normalized, 'data/') || str_ends_with($normalized, '/')) {
+                continue;
+            }
+            $relativePath = substr($normalized, strlen('data/'));
+            if ($relativePath === '' || $relativePath === false) {
+                continue;
+            }
+            $label = basename($relativePath);
+            $inv = $inventoryByPath[$normalized] ?? null;
+            $size = isset($inv['size_bytes']) ? (int) $inv['size_bytes'] : $this->tarMemberSize($tarPath, $normalized);
+            $mime = isset($inv['mime']) ? (trim((string) $inv['mime']) ?: null) : null;
+            $mime = $mime ?: $this->guessMime($label);
+            $files[] = [
+                'key' => '',
+                'file_id' => '',
+                'label' => $label,
+                'relative_path' => $relativePath,
+                'inner_path' => $normalized,
+                'size' => $size,
+                'mime' => $mime,
+                'group_id' => null,
+                'access_inner_path' => null,
+                'access_size' => null,
+                'access_mime' => null,
+            ];
+        }
+        if ($files === []) {
+            throw new \RuntimeException('BagIt package: no payload files under data/.');
+        }
+        usort($files, fn (array $a, array $b): int => strcmp($a['relative_path'], $b['relative_path']));
+        foreach ($files as $position => &$file) {
+            $file['key'] = 'f' . $position;
+            $file['file_id'] = 'bagit-' . $position;
+        }
+        unset($file);
+        $tree = $this->buildTree($files);
+
+        return [
+            'mets_inner_path' => 'bagit.txt',
+            'package_uuid' => $this->packageUuidFromBagIt($tarPath),
+            'package_format' => 'bagit',
+            'files' => $files,
+            'tree' => $tree,
+        ];
+    }
+
+    /**
+     * @return array<string, array{size_bytes?: int, mime?: string}>
+     */
+    protected function loadBagItInventory(string $tarPath): array
+    {
+        $inner = 'metadata/inventory.json';
+        if (!$this->tarHasMember($inner)) {
+            return [];
+        }
+        try {
+            $raw = $this->readTarMember($tarPath, $inner);
+        } catch (\Throwable $e) {
+            return [];
+        }
+        $decoded = json_decode($raw, true);
+        if (!is_array($decoded) || !isset($decoded['files']) || !is_array($decoded['files'])) {
+            return [];
+        }
+        $byPath = [];
+        foreach ($decoded['files'] as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $path = isset($row['path']) ? ltrim(str_replace('\\', '/', (string) $row['path']), '/') : '';
+            if ($path === '') {
+                continue;
+            }
+            $byPath[$path] = $row;
+        }
+
+        return $byPath;
+    }
+
+    protected function tarHasMember(string $innerPath): bool
+    {
+        $innerPath = ltrim(str_replace('\\', '/', $innerPath), '/');
+        foreach ($this->getTarMemberListing('') as $member) {
+            $normalized = ltrim(str_replace('\\', '/', $member), './');
+            if ($normalized === $innerPath) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected function packageUuidFromBagIt(string $tarPath): ?string
+    {
+        if (!$this->tarHasMember('metadata/submission.json')) {
+            return null;
+        }
+        try {
+            $raw = $this->readTarMember($tarPath, 'metadata/submission.json');
+        } catch (\Throwable $e) {
+            return null;
+        }
+        $decoded = json_decode($raw, true);
+        if (!is_array($decoded)) {
+            return null;
+        }
+        foreach (['game_key', 'submission_source_id'] as $field) {
+            $value = isset($decoded[$field]) ? trim((string) $decoded[$field]) : '';
+            if ($value !== '') {
+                return $value;
+            }
+        }
+
+        return null;
     }
 
     protected function findMetsPathInTar(string $tarPath): ?string

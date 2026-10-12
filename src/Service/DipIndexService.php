@@ -93,6 +93,13 @@ class DipIndexService
         if (!DipPackageMedia::isDipPackage($media->renderer())) {
             return null;
         }
+
+        $data = $media->mediaData();
+        $external = isset($data['external_tar_path']) ? trim((string) $data['external_tar_path']) : '';
+        if ($external !== '' && is_readable($external)) {
+            return $external;
+        }
+
         if (!$media->hasOriginal() || !$media->filename()) {
             return null;
         }
