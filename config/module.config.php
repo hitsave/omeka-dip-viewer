@@ -13,6 +13,7 @@ return [
                 'OmekaDipViewer/js/embla-carousel.umd.js' => dirname(__DIR__) . '/asset/js/embla-carousel.umd.js',
                 'OmekaDipViewer/js/embla-carousel-wheel-gestures.umd.js' => dirname(__DIR__) . '/asset/js/embla-carousel-wheel-gestures.umd.js',
                 'OmekaDipViewer/js/dip-embla.js' => dirname(__DIR__) . '/asset/js/dip-embla.js',
+                'OmekaDipViewer/js/dip-media-queue.js' => dirname(__DIR__) . '/asset/js/dip-media-queue.js',
                 'OmekaDipViewer/js/dip-gallery.js' => dirname(__DIR__) . '/asset/js/dip-gallery.js',
                 'OmekaDipViewer/js/video.min.js' => dirname(__DIR__) . '/asset/js/video.min.js',
                 'OmekaDipViewer/js/dip-videos.js' => dirname(__DIR__) . '/asset/js/dip-videos.js',
@@ -59,6 +60,9 @@ return [
             'OmekaDipViewer\Service\DipStreamCache' => 'OmekaDipViewer\Service\DipStreamCacheFactory',
             'OmekaDipViewer\Service\DipPreviewCache' => 'OmekaDipViewer\Service\DipPreviewCacheFactory',
             'OmekaDipViewer\Service\DipBrowsePreviewService' => 'OmekaDipViewer\Service\DipBrowsePreviewServiceFactory',
+            'OmekaDipViewer\Service\DipS3Config' => 'OmekaDipViewer\Service\DipS3ConfigFactory',
+            'OmekaDipViewer\Service\DipS3ObjectStore' => 'OmekaDipViewer\Service\DipS3ObjectStoreFactory',
+            'OmekaDipViewer\Service\DipPackageLocator' => 'OmekaDipViewer\Service\DipPackageLocatorFactory',
         ],
         'invokables' => [
             'OmekaDipViewer\Service\DipGalleryFilter' => 'OmekaDipViewer\Service\DipGalleryFilter',

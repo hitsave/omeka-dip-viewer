@@ -22,7 +22,10 @@ git clone https://github.com/hitsave/omeka-dip-viewer.git OmekaDipViewer
 
 In the Omeka admin UI: **Modules** → install and activate **Omeka DIP Viewer**, then open the module **Configure** screen for thresholds (large package limits, gallery caps, etc.). See **[docs/config-contract.md](docs/config-contract.md)**.
 
-Upload DIP `.tar` files via the **DIP package** ingester, or use an API client that registers media with ingester `omeka_dip_package` (same as the HitSave uploader).
+Register DIP media with ingester **`omeka_dip_package`**:
+
+- **Wasabi mount (Hit Save BagIt press):** POST `/api/media` with JSON `data.external_tar_path` set to a `.tar` readable inside the Omeka container (e.g. `/hitsave-incoming/press-material/T/pkg.tar`). No file upload.
+- **Legacy:** multipart upload of a `.tar` file (stored under Omeka `files/original/`).
 
 ## Features
 

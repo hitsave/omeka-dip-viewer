@@ -11,7 +11,6 @@ class DipPackageFactory implements FactoryInterface
     {
         return new DipPackage(
             $services->get('Omeka\File\TempFileFactory'),
-            $services->get('OmekaDipViewer\Service\MetsParser'),
             $services->get('OmekaDipViewer\Service\DipConfig')
         );
     }

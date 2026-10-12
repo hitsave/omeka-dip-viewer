@@ -3,7 +3,6 @@ namespace OmekaDipViewer\Media\Ingester;
 
 use OmekaDipViewer\Media\DipPackageMedia;
 use OmekaDipViewer\Service\DipConfig;
-use OmekaDipViewer\Service\MetsParser;
 use Omeka\Api\Request;
 use Omeka\Entity\Media;
 use Omeka\Media\Ingester\IngesterInterface;
@@ -13,13 +12,11 @@ use Omeka\File\TempFileFactory;
 class DipPackage implements IngesterInterface
 {
     protected TempFileFactory $tempFileFactory;
-    protected MetsParser $metsParser;
     protected DipConfig $dipConfig;
 
-    public function __construct(TempFileFactory $tempFileFactory, MetsParser $metsParser, DipConfig $dipConfig)
+    public function __construct(TempFileFactory $tempFileFactory, DipConfig $dipConfig)
     {
         $this->tempFileFactory = $tempFileFactory;
-        $this->metsParser = $metsParser;
         $this->dipConfig = $dipConfig;
     }
 
@@ -35,93 +32,84 @@ class DipPackage implements IngesterInterface
 
     public function form(\Laminas\View\Renderer\PhpRenderer $view, array $options = [])
     {
-        // Omeka echoes this string in media-field-wrapper.phtml (and in data-template attributes).
         return '
         <div class="field">
             <div class="field-meta">
-                <label for="media-file-input-__index__">' . $view->translate('DIP TAR file') . '</label>
-            </div>
-            <div class="inputs">
-                <input type="file" name="file[__index__]" id="media-file-input-__index__" class="media-file-input"
-                    accept=".tar,.tar.gz,.tgz,application/x-tar" required>
-                <input type="hidden" name="o:media[__index__][file_index]" value="__index__">
+                <label>' . $view->translate('BagIt packages are attached via API (Wasabi S3 prefix).') . '</label>
             </div>
         </div>';
     }
 
     public function ingest(Media $media, Request $request, ErrorStore $errorStore): void
     {
-        $upload = $this->resolveUploadedFile($request);
-        if (!$upload || ($upload['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
-            $errorStore->addError('upload', 'A DIP .tar file is required.');
+        if ($this->ingestFromExternalBagStorage($media, $request, $errorStore)) {
             return;
         }
 
-        $name = $upload['name'] ?? 'dip.tar';
-        $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
-        if (!in_array($ext, ['tar', 'gz', 'tgz'], true)) {
-            $errorStore->addError('upload', 'File must be a DIP TAR archive.');
-            return;
+        $errorStore->addError(
+            'upload',
+            'Set data.package_storage_prefix and data.dip_storage=wasabi-s3 (no file upload).'
+        );
+    }
+
+    /**
+     * Register DIP media from unpacked BagIt prefix on Wasabi (S3 API reads in OmekaDipViewer).
+     *
+     * @return bool true when external ingest completed or failed (do not fall through to upload)
+     */
+    protected function ingestFromExternalBagStorage(Media $media, Request $request, ErrorStore $errorStore): bool
+    {
+        $data = $this->mergeIngestData($media, $request);
+        $prefix = trim((string) ($data['package_storage_prefix'] ?? ''));
+        $storage = trim((string) ($data['dip_storage'] ?? ''));
+        if ($prefix === '') {
+            if ($storage === 'wasabi-s3') {
+                $errorStore->addError('upload', 'package_storage_prefix is required for wasabi-s3 DIP media.');
+                return true;
+            }
+            return false;
         }
 
-        $sizeBytes = (int) ($upload['size'] ?? 0);
-        $threshold = $this->dipConfig->getLargePackageThresholdBytes();
-        $largePackage = $sizeBytes >= $threshold;
-        if ($largePackage && $this->dipConfig->blockLargePackages()) {
-            $errorStore->addError('upload', sprintf(
-                'DIP is %d bytes (≥ %d). Large packages are blocked by configuration.',
-                $sizeBytes,
-                $threshold
-            ));
-            return;
-        }
-
-        $tempPath = $upload['tmp_name'];
-        try {
-            $index = $this->metsParser->indexTar($tempPath);
-        } catch (\Throwable $e) {
-            $errorStore->addError('upload', 'Invalid DIP: ' . $e->getMessage());
-            return;
-        }
-
-        $tempFile = $this->tempFileFactory->build();
-        $tempFile->setSourceName($name);
-        if (!copy($tempPath, $tempFile->getTempPath())) {
-            $errorStore->addError('upload', 'Could not stage DIP file.');
-            return;
+        $payload = [
+            'package_storage_prefix' => $prefix,
+            'dip_storage' => $storage !== '' ? $storage : 'wasabi-s3',
+            'dip_size_bytes' => (int) ($data['dip_size_bytes'] ?? 0),
+            'large_package' => false,
+            'large_package_threshold_bytes' => $this->dipConfig->getLargePackageThresholdBytes(),
+            'original_filename' => basename(rtrim($prefix, '/')),
+            'packaged_previews' => true,
+        ];
+        foreach (['dip_wasabi_uri', 'package_wasabi_uri', 'dip_sha256', 'package_uuid'] as $key) {
+            if (isset($data[$key]) && (string) $data[$key] !== '') {
+                $payload[$key] = (string) $data[$key];
+            }
         }
 
         $media->setIngester(DipPackageMedia::RENDERER);
         $media->setRenderer($this->getRenderer());
-        $media->setData([
-            'dip_size_bytes' => $sizeBytes,
-            'large_package' => $largePackage,
-            'large_package_threshold_bytes' => $threshold,
-            'original_filename' => $name,
-            'package_uuid' => $index['package_uuid'] ?? null,
-        ]);
-        $media->setSource($name);
+        $media->setData($payload);
+        $media->setSource(basename(rtrim($prefix, '/')));
 
-        $tempFile->mediaIngestFile($media, $request, $errorStore);
+        return true;
     }
 
     /**
-     * @return array<string, mixed>|null PHP upload array (name, type, tmp_name, error, size)
+     * @return array<string, mixed>
      */
-    protected function resolveUploadedFile(Request $request): ?array
+    protected function mergeIngestData(Media $media, Request $request): array
     {
-        $fileData = $request->getFileData();
-        if (isset($fileData['file'])) {
-            $file = $fileData['file'];
-            if (isset($file['tmp_name'])) {
-                return $file;
-            }
-            if (isset($file[0]) && is_array($file[0])) {
-                return $file[0];
-            }
+        $data = $request->getContent();
+        if (!is_array($data)) {
+            $data = [];
+        }
+        if (isset($data['data']) && is_array($data['data'])) {
+            $data = array_merge($data, $data['data']);
+        }
+        $mediaData = $media->getData();
+        if (is_array($mediaData) && $mediaData !== []) {
+            $data = array_merge($data, $mediaData);
         }
 
-        $upload = $_FILES['file'] ?? null;
-        return is_array($upload) ? $upload : null;
+        return $data;
     }
 }

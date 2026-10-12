@@ -1,0 +1,13 @@
+<?php
+/**
+ * Wasabi / S3 credentials for direct BagIt object reads (copy to dip-s3.config.php).
+ */
+return [
+    'endpoint' => 'https://s3.us-east-2.wasabisys.com',
+    'region' => 'us-east-2',
+    'bucket' => 'hitsave-incoming',
+    'credentials' => [
+        'key' => 'REPLACE_ME',
+        'secret' => 'REPLACE_ME',
+    ],
+];

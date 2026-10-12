@@ -14,7 +14,8 @@ class DipBrowsePreviewServiceFactory implements FactoryInterface
             $services->get(DipGalleryFilter::class),
             $services->get(DipPreviewCache::class),
             $services->get(DipCollageBuilder::class),
-            $services->get(MetsParser::class)
+            $services->get(MetsParser::class),
+            $services->get(DipS3ObjectStore::class)
         );
     }
 }

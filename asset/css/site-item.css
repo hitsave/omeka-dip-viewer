@@ -222,6 +222,36 @@ body.item.resource.show.omeka-dip-item-layout .omeka-dip-size {
 .omeka-dip-gallery-dialog-body {
     margin: 0;
     padding: 1rem;
+    touch-action: pan-y pinch-zoom;
+}
+
+.omeka-dip-gallery-lightbox-prev,
+.omeka-dip-gallery-lightbox-next {
+    position: absolute;
+    top: 50%;
+    z-index: 2;
+    transform: translateY(-50%);
+    font-size: 2rem;
+    line-height: 1;
+    border: none;
+    background: rgba(255, 255, 255, 0.88);
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 0.35rem 0.65rem;
+    opacity: 0.85;
+}
+
+.omeka-dip-gallery-lightbox-prev {
+    left: 0.5rem;
+}
+
+.omeka-dip-gallery-lightbox-next {
+    right: 0.5rem;
+}
+
+.omeka-dip-gallery-lightbox-prev:hover,
+.omeka-dip-gallery-lightbox-next:hover {
+    opacity: 1;
 }
 
 .omeka-dip-gallery-full {

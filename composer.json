@@ -1,0 +1,11 @@
+{
+    "name": "hitsave/omeka-dip-viewer",
+    "description": "Omeka S module for BagIt DIP packages",
+    "require": {
+        "php": ">=8.1",
+        "aws/aws-sdk-php": "^3.300"
+    },
+    "config": {
+        "sort-packages": true
+    }
+}

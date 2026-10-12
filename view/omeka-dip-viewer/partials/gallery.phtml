@@ -11,13 +11,20 @@ $initialCount = min($total, $maxDisplay);
 $hiddenCount = max(0, $total - $initialCount);
 $visibleFiles = array_slice($galleryFiles, 0, $initialCount, true);
 $deferredFiles = $hiddenCount > 0 ? array_slice($galleryFiles, $initialCount, null, true) : [];
+$packagedGrid = is_array($previewManifest ?? null) ? ($previewManifest['grid'] ?? []) : [];
 $galleryIndexJson = '[]';
 if ($total > 0) {
     $galleryIndex = [];
     foreach ($galleryFiles as $file) {
+        $fileKey = (string) ($file['key'] ?? '');
+        $fullSrc = $this->dipFileUrl($itemId, $mediaId, $fileKey, null, $siteSlug ?? null);
+        $thumbSrc = isset($packagedGrid[$fileKey])
+            ? $this->dipFileUrl($itemId, $mediaId, $fileKey, 'thumb', $siteSlug ?? null)
+            : $fullSrc;
         $galleryIndex[] = [
-            'key' => (string) ($file['key'] ?? ''),
-            'src' => $this->dipFileUrl($itemId, $mediaId, $file['key'], null, $siteSlug ?? null),
+            'key' => $fileKey,
+            'src' => $thumbSrc,
+            'fullSrc' => $fullSrc,
             'label' => (string) ($file['label'] ?? $file['relative_path'] ?? $file['key'] ?? ''),
         ];
     }
@@ -32,7 +39,7 @@ if ($total > 0) {
     <h4><?= $escape($translate('Images')) ?> <?= $total > 0 ? $escape('(' . number_format($total) . ')') : '' ?></h4>
     <p class="omeka-dip-gallery-note">
         <?= $escape(sprintf(
-            $translate('JPEG, PNG, GIF, and WebP under %s MB. Drag or scroll over the carousel (trackpad or wheel); click a slide to enlarge; arrow keys step through all %s gallery images in the enlarged view (not only the carousel). Other files are listed under package contents.'),
+            $translate('JPEG, PNG, GIF, and WebP under %s MB. Drag or scroll over the carousel (trackpad or wheel); click a slide to enlarge; in the enlarged view use arrow keys or swipe left/right (or the on-screen arrows) to step through all %s gallery images. Other files are listed under package contents.'),
             $maxMb,
             number_format($total)
         )) ?>
@@ -42,7 +49,11 @@ if ($total > 0) {
             <div class="omeka-dip-embla__container">
                 <?php foreach ($visibleFiles as $file): ?>
                     <?php
-                    $href = $this->dipFileUrl($itemId, $mediaId, $file['key'], null, $siteSlug ?? null);
+                    $fileKey = (string) ($file['key'] ?? '');
+                    $fullHref = $this->dipFileUrl($itemId, $mediaId, $fileKey, null, $siteSlug ?? null);
+                    $thumbHref = isset($packagedGrid[$fileKey])
+                        ? $this->dipFileUrl($itemId, $mediaId, $fileKey, 'thumb', $siteSlug ?? null)
+                        : $fullHref;
                     $label = $file['label'] ?? $file['relative_path'] ?? $file['key'];
                     ?>
                     <div class="omeka-dip-embla__slide omeka-dip-gallery-item">
@@ -50,14 +61,14 @@ if ($total > 0) {
                             class="omeka-dip-gallery-open"
                             role="button"
                             tabindex="0"
-                            data-dip-key="<?= $escape($file['key']) ?>"
-                            data-dip-src="<?= $escape($href) ?>"
+                            data-dip-key="<?= $escape($fileKey) ?>"
+                            data-dip-src="<?= $escape($thumbHref) ?>"
+                            data-dip-full-src="<?= $escape($fullHref) ?>"
                             data-dip-label="<?= $escape($label) ?>"
                         >
                             <img
-                                src="<?= $escape($href) ?>"
+                                data-dip-src="<?= $escape($thumbHref) ?>"
                                 alt="<?= $escape($label) ?>"
-                                loading="lazy"
                                 decoding="async"
                                 draggable="false"
                                 class="omeka-dip-gallery-thumb"
@@ -76,7 +87,11 @@ if ($total > 0) {
         <template class="omeka-dip-gallery-more-slides">
             <?php foreach ($deferredFiles as $file): ?>
                 <?php
-                $href = $this->dipFileUrl($itemId, $mediaId, $file['key'], null, $siteSlug ?? null);
+                $fileKey = (string) ($file['key'] ?? '');
+                $fullHref = $this->dipFileUrl($itemId, $mediaId, $fileKey, null, $siteSlug ?? null);
+                $thumbHref = isset($packagedGrid[$fileKey])
+                    ? $this->dipFileUrl($itemId, $mediaId, $fileKey, 'thumb', $siteSlug ?? null)
+                    : $fullHref;
                 $label = $file['label'] ?? $file['relative_path'] ?? $file['key'];
                 ?>
                 <div class="omeka-dip-embla__slide omeka-dip-gallery-item">
@@ -84,14 +99,14 @@ if ($total > 0) {
                         class="omeka-dip-gallery-open"
                         role="button"
                         tabindex="0"
-                        data-dip-key="<?= $escape($file['key']) ?>"
-                        data-dip-src="<?= $escape($href) ?>"
+                        data-dip-key="<?= $escape($fileKey) ?>"
+                        data-dip-src="<?= $escape($thumbHref) ?>"
+                        data-dip-full-src="<?= $escape($fullHref) ?>"
                         data-dip-label="<?= $escape($label) ?>"
                     >
                         <img
-                            src="<?= $escape($href) ?>"
+                            data-dip-src="<?= $escape($thumbHref) ?>"
                             alt="<?= $escape($label) ?>"
-                            loading="lazy"
                             decoding="async"
                             draggable="false"
                             class="omeka-dip-gallery-thumb"
@@ -117,8 +132,10 @@ if ($total > 0) {
         <form method="dialog">
             <button type="submit" class="omeka-dip-gallery-close" aria-label="<?= $escape($translate('Close')) ?>">×</button>
         </form>
+        <button type="button" class="omeka-dip-gallery-lightbox-prev" data-dip-lightbox-nav="-1" aria-label="<?= $escape($translate('Previous image')) ?>">‹</button>
+        <button type="button" class="omeka-dip-gallery-lightbox-next" data-dip-lightbox-nav="1" aria-label="<?= $escape($translate('Next image')) ?>">›</button>
         <figure class="omeka-dip-gallery-dialog-body">
-            <img src="" alt="" class="omeka-dip-gallery-full">
+            <img src="" alt="" class="omeka-dip-gallery-full" draggable="false">
             <figcaption class="omeka-dip-gallery-caption"></figcaption>
         </figure>
     </dialog>

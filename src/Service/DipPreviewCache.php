@@ -28,6 +28,15 @@ class DipPreviewCache
         return $dir . '/fallback-' . $hash . '-' . $versionKey . '.jpg';
     }
 
+    public function packagedExtractPath(int $mediaId, string $innerPath): string
+    {
+        $dir = $this->mediaDir($mediaId);
+        $hash = substr(hash('sha256', $innerPath), 0, 16);
+        $base = basename(str_replace('\\', '/', $innerPath));
+
+        return $dir . '/packaged-' . $hash . '-' . $base;
+    }
+
     public function isFresh(string $cachePath, string $tarPath): bool
     {
         if (!is_readable($cachePath)) {
@@ -43,7 +52,10 @@ class DipPreviewCache
     {
         $base = $this->dipConfig->getPreviewCacheDirectory();
         $dir = $base . '/' . $mediaId;
-        if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) {
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+        if (!is_dir($dir)) {
             throw new \RuntimeException('Cannot create DIP preview cache directory.');
         }
 
