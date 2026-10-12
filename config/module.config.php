@@ -57,7 +57,6 @@ return [
             'OmekaDipViewer\Service\DipConfig' => 'OmekaDipViewer\Service\DipConfigFactory',
             'OmekaDipViewer\Service\MetsParser' => 'OmekaDipViewer\Service\MetsParserFactory',
             'OmekaDipViewer\Service\DipIndexService' => 'OmekaDipViewer\Service\DipIndexServiceFactory',
-            'OmekaDipViewer\Service\DipStreamCache' => 'OmekaDipViewer\Service\DipStreamCacheFactory',
             'OmekaDipViewer\Service\DipPreviewCache' => 'OmekaDipViewer\Service\DipPreviewCacheFactory',
             'OmekaDipViewer\Service\DipBrowsePreviewService' => 'OmekaDipViewer\Service\DipBrowsePreviewServiceFactory',
             'OmekaDipViewer\Service\DipS3Config' => 'OmekaDipViewer\Service\DipS3ConfigFactory',

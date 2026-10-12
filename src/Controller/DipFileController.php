@@ -9,9 +9,6 @@ use Laminas\Mvc\Controller\AbstractActionController;
 
 class DipFileController extends AbstractActionController
 {
-    /** Stream from disk cache when at or above this size (bytes). */
-    protected const STREAM_SIZE_THRESHOLD = 1048576;
-
     public function streamAction()
     {
         $mediaId = (int) $this->params('media_id');
@@ -249,66 +246,6 @@ class DipFileController extends AbstractActionController
             ->addHeaderLine('Cache-Control', 'public, max-age=86400, immutable')
             ->addHeaderLine('Content-Disposition', 'inline; filename="' . addslashes(basename($innerPath)) . '"');
         $response->setContent(file_get_contents($cachePath) ?: '');
-
-        return $response;
-    }
-
-    protected function sendRangedFileResponse(string $path, string $mime, string $downloadName)
-    {
-        if (!is_readable($path)) {
-            return $this->getResponse()->setStatusCode(404);
-        }
-
-        $size = filesize($path);
-        if ($size === false) {
-            return $this->getResponse()->setStatusCode(500);
-        }
-
-        $response = $this->getResponse();
-        $response->getHeaders()
-            ->addHeaderLine('Content-Type', $mime)
-            ->addHeaderLine('Accept-Ranges', 'bytes')
-            ->addHeaderLine('Cache-Control', 'public, max-age=86400, immutable')
-            ->addHeaderLine('Content-Disposition', 'inline; filename="' . addslashes($downloadName) . '"');
-
-        $rangeHeader = $this->getRequest()->getHeader('Range');
-        $rangeValue = $rangeHeader ? $rangeHeader->getFieldValue() : '';
-
-        if ($rangeValue !== '' && preg_match('/bytes=(\d+)-(\d*)/', $rangeValue, $matches)) {
-            $start = (int) $matches[1];
-            $end = $matches[2] === '' ? $size - 1 : min((int) $matches[2], $size - 1);
-            if ($start > $end || $start >= $size) {
-                $response->setStatusCode(416);
-                $response->getHeaders()->addHeaderLine('Content-Range', 'bytes */' . $size);
-
-                return $response;
-            }
-            $length = $end - $start + 1;
-            $response->setStatusCode(206);
-            $response->getHeaders()
-                ->addHeaderLine('Content-Range', "bytes $start-$end/$size")
-                ->addHeaderLine('Content-Length', (string) $length);
-
-            $handle = fopen($path, 'rb');
-            if ($handle === false) {
-                return $this->getResponse()->setStatusCode(500);
-            }
-            fseek($handle, $start);
-            $chunk = stream_get_contents($handle, $length);
-            fclose($handle);
-            $response->setContent($chunk !== false ? $chunk : '');
-
-            return $response;
-        }
-
-        $response->getHeaders()->addHeaderLine('Content-Length', (string) $size);
-        $handle = fopen($path, 'rb');
-        if ($handle === false) {
-            return $this->getResponse()->setStatusCode(500);
-        }
-        $contents = stream_get_contents($handle);
-        fclose($handle);
-        $response->setContent($contents !== false ? $contents : '');
 
         return $response;
     }

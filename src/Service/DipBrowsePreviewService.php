@@ -16,7 +16,6 @@ class DipBrowsePreviewService
     protected DipGalleryFilter $galleryFilter;
     protected DipPreviewCache $previewCache;
     protected DipCollageBuilder $collageBuilder;
-    protected MetsParser $metsParser;
     protected DipS3ObjectStore $s3;
 
     public function __construct(
@@ -25,7 +24,6 @@ class DipBrowsePreviewService
         DipGalleryFilter $galleryFilter,
         DipPreviewCache $previewCache,
         DipCollageBuilder $collageBuilder,
-        MetsParser $metsParser,
         DipS3ObjectStore $s3
     ) {
         $this->indexService = $indexService;
@@ -33,7 +31,6 @@ class DipBrowsePreviewService
         $this->galleryFilter = $galleryFilter;
         $this->previewCache = $previewCache;
         $this->collageBuilder = $collageBuilder;
-        $this->metsParser = $metsParser;
         $this->s3 = $s3;
     }
 
@@ -117,7 +114,6 @@ class DipBrowsePreviewService
         if ($s3Prefix === null) {
             throw new \RuntimeException('DIP package storage not found.');
         }
-        $tarPath = null;
 
         $manifest = $this->indexService->getPreviewManifest($media);
         $typeKey = preg_replace('/[^a-z0-9_-]/i', '', $type) ?: 'medium';
@@ -125,7 +121,6 @@ class DipBrowsePreviewService
             return $this->resolvePackagedBrowseFile(
                 $media,
                 $s3Prefix,
-                $tarPath,
                 (string) $manifest['browse'][$typeKey]
             );
         }
@@ -139,8 +134,8 @@ class DipBrowsePreviewService
         $minCollage = $this->dipConfig->getBrowsePreviewCollageMinImages();
         if (count($galleryFiles) >= $minCollage) {
             $cachePath = $this->previewCache->collagePath((int) $media->id(), $versionKey);
-            if ($this->previewCacheNeedsRebuild($cachePath, $tarPath)) {
-                $this->buildCollage($media, $galleryFiles, $cachePath, $type, $tarPath, $s3Prefix);
+            if ($this->previewCacheNeedsRebuild($cachePath)) {
+                $this->buildCollage($media, $galleryFiles, $cachePath, $type, $s3Prefix);
             }
 
             return [$cachePath, 'image/png'];
@@ -148,8 +143,8 @@ class DipBrowsePreviewService
 
         $file = $galleryFiles[0];
         $cachePath = $this->previewCache->fallbackPath((int) $media->id(), (string) $file['key'], $versionKey);
-        if ($this->previewCacheNeedsRebuild($cachePath, $tarPath)) {
-            $this->buildSingleFallback($media, $file, $cachePath, $type, $tarPath, $s3Prefix);
+        if ($this->previewCacheNeedsRebuild($cachePath)) {
+            $this->buildSingleFallback($media, $file, $cachePath, $type, $s3Prefix);
         }
 
         return [$cachePath, 'image/jpeg'];
@@ -163,21 +158,18 @@ class DipBrowsePreviewService
      */
     protected function resolvePackagedBrowseFile(
         MediaRepresentation $media,
-        ?string $s3Prefix,
-        ?string $tarPath,
+        string $s3Prefix,
         string $innerPath
     ): array {
         $mediaId = (int) $media->id();
         $cachePath = $this->previewCache->packagedExtractPath($mediaId, $innerPath);
         if (!is_readable($cachePath)) {
-            if ($s3Prefix !== null) {
-                $bytes = $this->s3->getObject($s3Prefix, $innerPath);
-                $dir = dirname($cachePath);
-                if (!is_dir($dir)) {
-                    mkdir($dir, 0755, true);
-                }
-                file_put_contents($cachePath, $bytes);
+            $bytes = $this->s3->getObject($s3Prefix, $innerPath);
+            $dir = dirname($cachePath);
+            if (!is_dir($dir)) {
+                mkdir($dir, 0755, true);
             }
+            file_put_contents($cachePath, $bytes);
         }
         $mime = str_ends_with(strtolower($innerPath), '.png') ? 'image/png' : 'image/jpeg';
 
@@ -201,16 +193,9 @@ class DipBrowsePreviewService
     /**
      * @param list<array<string, mixed>> $galleryFiles
      */
-    protected function previewCacheNeedsRebuild(string $cachePath, ?string $tarPath): bool
+    protected function previewCacheNeedsRebuild(string $cachePath): bool
     {
-        if (!is_readable($cachePath)) {
-            return true;
-        }
-        if ($tarPath !== null && $tarPath !== '') {
-            return !$this->previewCache->isFresh($cachePath, $tarPath);
-        }
-
-        return false;
+        return !is_readable($cachePath);
     }
 
     protected function buildCollage(
@@ -218,8 +203,7 @@ class DipBrowsePreviewService
         array $galleryFiles,
         string $cachePath,
         string $type,
-        ?string $tarPath,
-        ?string $s3Prefix = null
+        string $s3Prefix
     ): void {
         $itemId = (int) $media->item()->id();
         $mediaId = (int) $media->id();
@@ -228,7 +212,7 @@ class DipBrowsePreviewService
 
         $gdImages = [];
         foreach ($picked as $file) {
-            $img = $this->loadGalleryImage($tarPath, $s3Prefix, $file);
+            $img = $this->loadGalleryImage($s3Prefix, $file);
             if ($img !== null) {
                 $gdImages[] = $img;
             }
@@ -240,7 +224,7 @@ class DipBrowsePreviewService
             if ($galleryFiles === []) {
                 throw new \RuntimeException('Could not load collage images.');
             }
-            $this->buildSingleFallback($media, $galleryFiles[0], $cachePath, $type, $tarPath, $s3Prefix);
+            $this->buildSingleFallback($media, $galleryFiles[0], $cachePath, $type, $s3Prefix);
 
             return;
         }
@@ -262,10 +246,9 @@ class DipBrowsePreviewService
         array $file,
         string $cachePath,
         string $type,
-        ?string $tarPath,
-        ?string $s3Prefix = null
+        string $s3Prefix
     ): void {
-        $img = $this->loadGalleryImage($tarPath, $s3Prefix, $file);
+        $img = $this->loadGalleryImage($s3Prefix, $file);
         if ($img === null) {
             throw new \RuntimeException('Could not load fallback image from DIP.');
         }
@@ -279,16 +262,13 @@ class DipBrowsePreviewService
     /**
      * @param array<string, mixed> $file
      */
-    protected function loadGalleryImage(?string $tarPath, ?string $s3Prefix, array $file): ?\GdImage
+    protected function loadGalleryImage(string $s3Prefix, array $file): ?\GdImage
     {
         $innerPath = $file['inner_path'] ?? '';
         if ($innerPath === '') {
             return null;
         }
         try {
-            if ($s3Prefix === null || $s3Prefix === '') {
-                return null;
-            }
             $bytes = $this->s3->getObject($s3Prefix, $innerPath);
         } catch (\Throwable $e) {
             return null;
