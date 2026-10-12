@@ -53,13 +53,6 @@ class DipPackageLocator
             return '';
         }
         $key = trim(substr($rest, $slash + 1), '/');
-        if ($key === '') {
-            return '';
-        }
-        if (str_ends_with(strtolower($key), '.tar')) {
-            $key = substr($key, 0, -4);
-        }
-
         return trim($key, '/');
     }
 }

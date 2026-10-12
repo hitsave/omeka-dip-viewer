@@ -18,7 +18,7 @@ POST `/api/media` with ingester `omeka_dip_package` and JSON `data`:
 - `package_storage_prefix`: e.g. `press-material/F/{package_id}`
 - `dip_wasabi_uri`: `s3://hitsave-incoming/press-material/F/{package_id}/`
 
-No file upload. Ingest + `upload-dip-omeka-api.py` set these fields automatically.
+No file upload. Ingest + `register-dip-omeka-api.py` set these fields automatically.
 
 ## Local dev
 
