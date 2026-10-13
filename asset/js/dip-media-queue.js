@@ -113,6 +113,113 @@
         enqueue({ img: img, url: targetUrl }, !!options.priority);
     }
 
+    function cancelProgressLoad(img) {
+        if (!img) {
+            return;
+        }
+        if (img._dipLoadAbort) {
+            img._dipLoadAbort.abort();
+            img._dipLoadAbort = null;
+        }
+    }
+
+    function revokeBlobUrl(img) {
+        if (img && img._dipBlobUrl) {
+            URL.revokeObjectURL(img._dipBlobUrl);
+            img._dipBlobUrl = null;
+        }
+    }
+
+    /**
+     * Fetch full image with download progress (lightbox). Falls back to loadImage on failure.
+     */
+    function loadImageWithProgress(img, url, options) {
+        options = options || {};
+        if (!img || !url) {
+            return;
+        }
+        cancelProgressLoad(img);
+        img.setAttribute('data-dip-src', url);
+        img.removeAttribute('data-dip-loaded');
+        img.removeAttribute('data-dip-queued');
+
+        var onProgress = typeof options.onProgress === 'function' ? options.onProgress : null;
+        var onComplete = typeof options.onComplete === 'function' ? options.onComplete : null;
+        var onError = typeof options.onError === 'function' ? options.onError : null;
+
+        var ac = new AbortController();
+        img._dipLoadAbort = ac;
+
+        fetch(url, { credentials: 'same-origin', signal: ac.signal })
+            .then(function (resp) {
+                if (!resp.ok) {
+                    throw new Error('HTTP ' + resp.status);
+                }
+                var total = parseInt(resp.headers.get('Content-Length') || '0', 10);
+                if (!resp.body || total <= 0) {
+                    if (onProgress) {
+                        onProgress(null);
+                    }
+                    return resp.blob();
+                }
+                var loaded = 0;
+                var reader = resp.body.getReader();
+                var chunks = [];
+
+                function pump() {
+                    return reader.read().then(function (result) {
+                        if (result.done) {
+                            return new Blob(chunks);
+                        }
+                        chunks.push(result.value);
+                        loaded += result.value.byteLength;
+                        if (onProgress) {
+                            onProgress(Math.min(100, Math.round((loaded * 100) / total)));
+                        }
+                        return pump();
+                    });
+                }
+
+                return pump();
+            })
+            .then(function (blob) {
+                if (ac.signal.aborted) {
+                    return;
+                }
+                revokeBlobUrl(img);
+                img._dipBlobUrl = URL.createObjectURL(blob);
+                img.src = img._dipBlobUrl;
+                img.dataset.dipLoaded = '1';
+                img._dipLoadAbort = null;
+                if (onComplete) {
+                    onComplete();
+                }
+            })
+            .catch(function (err) {
+                if (err && err.name === 'AbortError') {
+                    return;
+                }
+                img._dipLoadAbort = null;
+                if (onError) {
+                    onError(err);
+                    return;
+                }
+                img.onload = function () {
+                    img.dataset.dipLoaded = '1';
+                    img.removeAttribute('data-dip-queued');
+                    if (onComplete) {
+                        onComplete();
+                    }
+                };
+                img.onerror = function () {
+                    if (onComplete) {
+                        onComplete();
+                    }
+                };
+                img.src = url;
+            });
+    }
+
     function scan(root) {
         var scope = root || document;
         scope.querySelectorAll('img[data-dip-src]:not([data-dip-loaded])').forEach(attachImage);
@@ -130,6 +237,9 @@
     window.OmekaDipMediaQueue = {
         attachImage: attachImage,
         loadImage: loadImage,
+        loadImageWithProgress: loadImageWithProgress,
+        cancelProgressLoad: cancelProgressLoad,
+        revokeBlobUrl: revokeBlobUrl,
         prefetchUrl: prefetchUrl,
         scan: scan,
         setMaxConcurrent: function (n) {

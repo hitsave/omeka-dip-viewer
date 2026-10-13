@@ -199,6 +199,18 @@ body.item.resource.show.omeka-dip-item-layout .omeka-dip-size {
     padding: 0;
     border: none;
     border-radius: 6px;
+    color: #1a1a1a;
+    background: #fff;
+}
+
+/* White lightbox panel: beat HitSaveArchive #content figcaption theme colors (e.g. dark mode #e8e8ee). */
+#content .omeka-dip-gallery-dialog,
+#content .omeka-dip-gallery-dialog .omeka-dip-gallery-dialog-body,
+#content .omeka-dip-gallery-dialog figcaption.omeka-dip-gallery-caption,
+html[data-hitsave-theme="dark"] #content .omeka-dip-gallery-dialog,
+html[data-hitsave-theme="dark"] #content .omeka-dip-gallery-dialog figcaption.omeka-dip-gallery-caption,
+html[data-hitsave-theme="light"] #content .omeka-dip-gallery-dialog figcaption.omeka-dip-gallery-caption {
+    color: #1a1a1a;
 }
 
 .omeka-dip-gallery-dialog::backdrop {
@@ -266,6 +278,13 @@ body.item.resource.show.omeka-dip-item-layout .omeka-dip-size {
     text-align: center;
     font-size: 0.9rem;
     word-break: break-word;
+    color: #1a1a1a;
+}
+
+#content .omeka-dip-gallery-dialog .omeka-dip-gallery-caption.is-loading,
+html[data-hitsave-theme="dark"] #content .omeka-dip-gallery-dialog .omeka-dip-gallery-caption.is-loading {
+    color: #333;
+    font-style: italic;
 }
 
 .omeka-dip-videos {
