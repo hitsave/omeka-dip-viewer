@@ -10,7 +10,7 @@ use Omeka\File\Store\StoreInterface;
  */
 class DipIndexService
 {
-    protected MetsParser $metsParser;
+    protected BagItInventoryIndexParser $bagItInventoryIndexParser;
     protected StoreInterface $store;
     protected DipConfig $dipConfig;
     protected DipPackageLocator $locator;
@@ -23,13 +23,13 @@ class DipIndexService
     protected array $manifestRequestCache = [];
 
     public function __construct(
-        MetsParser $metsParser,
+        BagItInventoryIndexParser $bagItInventoryIndexParser,
         StoreInterface $store,
         DipConfig $dipConfig,
         DipPackageLocator $locator,
         DipS3ObjectStore $s3
     ) {
-        $this->metsParser = $metsParser;
+        $this->bagItInventoryIndexParser = $bagItInventoryIndexParser;
         $this->store = $store;
         $this->dipConfig = $dipConfig;
         $this->locator = $locator;
@@ -37,7 +37,7 @@ class DipIndexService
     }
 
     /**
-     * @return array{mets_inner_path: string, package_uuid: ?string, files: array, tree: array}|null
+     * @return array{bagit_anchor_relpath: string, package_uuid: ?string, files: array, tree: array}|null
      */
     public function getIndex(MediaRepresentation $media): ?array
     {
@@ -153,7 +153,7 @@ class DipIndexService
     }
 
     /**
-     * @return array{mets_inner_path: string, package_uuid: ?string, files: array, tree: array}|null
+     * @return array{bagit_anchor_relpath: string, package_uuid: ?string, files: array, tree: array}|null
      */
     protected function buildIndexFromS3Prefix(int $mediaId, string $prefix): ?array
     {
@@ -196,7 +196,7 @@ class DipIndexService
             } catch (\Throwable $e) {
                 // optional
             }
-            $index = $this->metsParser->indexBagItFromInventory($inventory, $preview, $packageUuid);
+            $index = $this->bagItInventoryIndexParser->indexBagItFromInventory($inventory, $preview, $packageUuid);
         } catch (\Throwable $e) {
             return null;
         }
@@ -318,7 +318,7 @@ class DipIndexService
     }
 
     /**
-     * @param array{mets_inner_path: string, package_uuid: ?string, files: array, tree: array} $index
+     * @param array{bagit_anchor_relpath: string, package_uuid: ?string, files: array, tree: array} $index
      */
     protected function writeCacheFile(string $path, array $index): void
     {
@@ -330,7 +330,7 @@ class DipIndexService
     }
 
     /**
-     * Drop in-request, APCu, and on-disk METS indexes for a media row (e.g. after media update).
+     * Drop in-request, APCu, and on-disk BagIt indexes for a media row (e.g. after media update).
      */
     public function invalidateIndexCache(int $mediaId): void
     {
@@ -401,7 +401,7 @@ class DipIndexService
     }
 
     /**
-     * @param array{mets_inner_path: string, package_uuid: ?string, files: array, tree: array} $index
+     * @param array{bagit_anchor_relpath: string, package_uuid: ?string, files: array, tree: array} $index
      */
     protected function storeApcuIndex(int $mediaId, ?string $key, array $index): void
     {
