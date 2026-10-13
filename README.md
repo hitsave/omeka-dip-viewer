@@ -30,3 +30,7 @@ php test/parse_fixture.php /path/to/bag/dir   # needs metadata/inventory.json
 ## Version
 
 See `config/module.ini` (0.5.x = S3 BagIt only).
+
+## License
+
+Copyright 2026 Hit Save! Licensed under the [Apache License, Version 2.0](LICENSE).
