@@ -9,7 +9,7 @@ class DipIndexServiceFactory implements FactoryInterface
     public function __invoke(ContainerInterface $services, $requestedName, ?array $options = null)
     {
         return new DipIndexService(
-            $services->get(MetsParser::class),
+            $services->get(BagItInventoryIndexParser::class),
             $services->get('Omeka\File\Store'),
             $services->get(DipConfig::class),
             $services->get(DipPackageLocator::class),

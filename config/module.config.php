@@ -55,7 +55,7 @@ return [
     'service_manager' => [
         'factories' => [
             'OmekaDipViewer\Service\DipConfig' => 'OmekaDipViewer\Service\DipConfigFactory',
-            'OmekaDipViewer\Service\MetsParser' => 'OmekaDipViewer\Service\MetsParserFactory',
+            'OmekaDipViewer\Service\BagItInventoryIndexParser' => 'OmekaDipViewer\Service\BagItInventoryIndexParserFactory',
             'OmekaDipViewer\Service\DipIndexService' => 'OmekaDipViewer\Service\DipIndexServiceFactory',
             'OmekaDipViewer\Service\DipPreviewCache' => 'OmekaDipViewer\Service\DipPreviewCacheFactory',
             'OmekaDipViewer\Service\DipBrowsePreviewService' => 'OmekaDipViewer\Service\DipBrowsePreviewServiceFactory',

@@ -1,29 +1,29 @@
-#!/usr/bin/env php
 <?php
-require_once __DIR__ . '/../vendor/autoload.php';
-require_once __DIR__ . '/../src/Service/MetsParser.php';
+declare(strict_types=1);
 
-use OmekaDipViewer\Service\MetsParser;
+require_once __DIR__ . '/../src/Service/BagItInventoryIndexParser.php';
 
-if ($argc < 2) {
-    fwrite(STDERR, "Usage: parse_fixture.php <bag_dir>\n");
+use OmekaDipViewer\Service\BagItInventoryIndexParser;
+
+$inventoryPath = $argv[1] ?? (__DIR__ . '/fixtures/inventory.json');
+$raw = file_get_contents($inventoryPath);
+if ($raw === false) {
+    fwrite(STDERR, "Cannot read {$inventoryPath}\n");
     exit(1);
 }
-
-$bagDir = rtrim($argv[1], '/');
-$inventoryPath = $bagDir . '/metadata/inventory.json';
-if (!is_readable($inventoryPath)) {
-    fwrite(STDERR, "Missing {$inventoryPath}\n");
-    exit(1);
-}
-
-$inventory = json_decode(file_get_contents($inventoryPath), true);
+$inventory = json_decode($raw, true);
 if (!is_array($inventory)) {
-    fwrite(STDERR, "Invalid inventory JSON\n");
+    fwrite(STDERR, "Invalid JSON in {$inventoryPath}\n");
     exit(1);
 }
 
-$parser = new MetsParser();
-$index = $parser->indexBagItFromInventory($inventory, null, null);
+$preview = null;
+$previewPath = $argv[2] ?? null;
+if ($previewPath !== null && is_readable($previewPath)) {
+    $previewRaw = file_get_contents($previewPath);
+    $preview = is_string($previewRaw) ? json_decode($previewRaw, true) : null;
+}
+
+$parser = new BagItInventoryIndexParser();
+$index = $parser->indexBagItFromInventory($inventory, is_array($preview) ? $preview : null, 'test-uuid');
 echo json_encode($index, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n";
-echo 'files: ' . count($index['files']) . "\n";

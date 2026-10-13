@@ -4,12 +4,12 @@ namespace OmekaDipViewer\Service;
 /**
  * Index browseable files inside an RFC 8493 BagIt package (metadata/inventory.json).
  */
-class MetsParser
+class BagItInventoryIndexParser
 {
     /**
      * @param array<string, mixed> $inventory
      * @param array<string, mixed>|null $previewManifest
-     * @return array{mets_inner_path: string, package_uuid: ?string, package_format: string, files: array, tree: array, preview_manifest: ?array}
+     * @return array{bagit_anchor_relpath: string, package_uuid: ?string, package_format: string, files: array, tree: array, preview_manifest: ?array}
      */
     public function indexBagItFromInventory(array $inventory, ?array $previewManifest, ?string $packageUuid): array
     {
@@ -57,10 +57,11 @@ class MetsParser
             $file['file_id'] = 'bagit-' . $position;
         }
         unset($file);
+
         $tree = $this->buildTree($files);
 
         return [
-            'mets_inner_path' => 'bagit.txt',
+            'bagit_anchor_relpath' => 'bagit.txt',
             'package_uuid' => $packageUuid,
             'package_format' => 'bagit',
             'files' => $files,
