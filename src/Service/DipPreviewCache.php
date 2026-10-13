@@ -37,17 +37,6 @@ class DipPreviewCache
         return $dir . '/packaged-' . $hash . '-' . $base;
     }
 
-    public function isFresh(string $cachePath, string $tarPath): bool
-    {
-        if (!is_readable($cachePath)) {
-            return false;
-        }
-        $tarMtime = @filemtime($tarPath) ?: 0;
-        $cacheMtime = @filemtime($cachePath) ?: 0;
-
-        return $cacheMtime >= $tarMtime;
-    }
-
     protected function mediaDir(int $mediaId): string
     {
         $base = $this->dipConfig->getPreviewCacheDirectory();

@@ -47,23 +47,15 @@ class DipIndexService
         }
 
         $located = $this->locator->locate($media);
-        if ($located === null) {
-            $legacy = $this->legacyStoredIndex($media);
-            $this->requestCache[$mediaId] = $legacy;
+        if ($located === null || $located['type'] !== 's3') {
+            $this->requestCache[$mediaId] = null;
 
-            return $legacy;
+            return null;
         }
-        if ($located['type'] === 's3') {
-            $index = $this->buildIndexFromS3Prefix($mediaId, (string) $located['prefix']);
-            $this->requestCache[$mediaId] = $index;
+        $index = $this->buildIndexFromS3Prefix($mediaId, (string) $located['prefix']);
+        $this->requestCache[$mediaId] = $index;
 
-            return $index;
-        }
-
-        $legacy = $this->legacyStoredIndex($media);
-        $this->requestCache[$mediaId] = $legacy;
-
-        return $legacy;
+        return $index;
     }
 
     /**
@@ -246,22 +238,6 @@ class DipIndexService
         return $decoded;
     }
 
-    /**
-     * @return array|null legacy ingest snapshot when tar is unavailable
-     */
-    protected function legacyStoredIndex(MediaRepresentation $media): ?array
-    {
-        $data = $media->mediaData();
-        $index = $data['dip_index'] ?? null;
-
-        return is_array($index) ? $index : null;
-    }
-
-    protected function manifestCacheFilePath(int $mediaId, string $tarPath): ?string
-    {
-        return $this->manifestCacheFilePathForIdentity($mediaId, 'tar:' . $tarPath);
-    }
-
     protected function manifestCacheFilePathForIdentity(int $mediaId, string $identity): ?string
     {
         $indexPath = $this->cacheFilePathForIdentity($mediaId, $identity);
@@ -302,11 +278,6 @@ class DipIndexService
             return;
         }
         file_put_contents($path, $json, LOCK_EX);
-    }
-
-    protected function cacheFilePath(int $mediaId, string $tarPath): ?string
-    {
-        return $this->cacheFilePathForIdentity($mediaId, 'tar:' . $tarPath);
     }
 
     protected function cacheFilePathForIdentity(int $mediaId, string $identity): ?string

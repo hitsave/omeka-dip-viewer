@@ -81,7 +81,7 @@ class DipBrowsePreviewService
         if (!$media) {
             return false;
         }
-        // Do not index the tar during page render (browse hub lists many items).
+        // Do not fetch S3 inventory during page render (browse hub lists many items).
         // Preview bytes are built on GET /omeka-dip/browse-preview/{media_id}.
         return $this->indexService->packageIsAvailable($media);
     }
