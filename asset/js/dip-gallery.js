@@ -58,6 +58,41 @@
         return -1;
     }
 
+    function captionForEntry(entry, index, total) {
+        var label = entry.label || '';
+        if (total > 1) {
+            return label + ' (' + (index + 1) + ' / ' + total + ')';
+        }
+        return label;
+    }
+
+    function loadingAltText(label, percent) {
+        var status =
+            percent === null || percent === undefined
+                ? 'Loading...'
+                : 'Loading... ' + percent + '%';
+        return label ? label + ' — ' + status : status;
+    }
+
+    function setLightboxLoading(fullImg, caption, label, percent) {
+        fullImg.alt = loadingAltText(label, percent);
+        if (caption) {
+            caption.textContent =
+                percent === null || percent === undefined
+                    ? 'Loading...'
+                    : 'Loading... ' + percent + '%';
+            caption.classList.add('is-loading');
+        }
+    }
+
+    function setLightboxReady(fullImg, caption, entry, index, total) {
+        fullImg.alt = entry.label || '';
+        if (caption) {
+            caption.textContent = captionForEntry(entry, index, total);
+            caption.classList.remove('is-loading');
+        }
+    }
+
     function showLightboxAtIndex(root, index, dialog, fullImg, caption) {
         var items = getGalleryIndex(root);
         if (!items.length || index < 0 || index >= items.length) {
@@ -67,26 +102,46 @@
         dialog.dataset.dipLightboxIndex = String(index);
         var thumbSrc = entry.src;
         var fullSrc = entry.fullSrc || entry.src;
+        var label = entry.label || '';
+        var needsFullLoad = thumbSrc && fullSrc && fullSrc !== thumbSrc;
+
+        if (window.OmekaDipMediaQueue) {
+            window.OmekaDipMediaQueue.cancelProgressLoad(fullImg);
+        }
         fullImg.removeAttribute('data-dip-loaded');
         fullImg.removeAttribute('data-dip-queued');
-        if (thumbSrc && fullSrc !== thumbSrc) {
+        if (needsFullLoad) {
             fullImg.src = thumbSrc;
+            setLightboxLoading(fullImg, caption, label, 0);
         } else {
             fullImg.removeAttribute('src');
+            setLightboxReady(fullImg, caption, entry, index, items.length);
         }
+
         if (window.OmekaDipMediaQueue) {
-            window.OmekaDipMediaQueue.loadImage(fullImg, fullSrc, { priority: true });
+            if (needsFullLoad && window.OmekaDipMediaQueue.loadImageWithProgress) {
+                window.OmekaDipMediaQueue.loadImageWithProgress(fullImg, fullSrc, {
+                    onProgress: function (percent) {
+                        if (parseInt(dialog.dataset.dipLightboxIndex || '-1', 10) !== index) {
+                            return;
+                        }
+                        setLightboxLoading(fullImg, caption, label, percent);
+                    },
+                    onComplete: function () {
+                        if (parseInt(dialog.dataset.dipLightboxIndex || '-1', 10) !== index) {
+                            return;
+                        }
+                        setLightboxReady(fullImg, caption, entry, index, items.length);
+                    },
+                });
+            } else {
+                window.OmekaDipMediaQueue.loadImage(fullImg, fullSrc, { priority: true });
+                setLightboxReady(fullImg, caption, entry, index, items.length);
+            }
             prefetchLightboxNeighbors(root, index);
         } else {
             fullImg.src = fullSrc;
-        }
-        fullImg.alt = entry.label || '';
-        if (caption) {
-            if (items.length > 1) {
-                caption.textContent = (entry.label || '') + ' (' + (index + 1) + ' / ' + items.length + ')';
-            } else {
-                caption.textContent = entry.label || '';
-            }
+            setLightboxReady(fullImg, caption, entry, index, items.length);
         }
         var opening = !dialog.open;
         dialog.showModal();
@@ -321,6 +376,10 @@
             });
             dialog.addEventListener('close', function () {
                 unbindLightboxKeyboard(dialog);
+                if (window.OmekaDipMediaQueue) {
+                    window.OmekaDipMediaQueue.cancelProgressLoad(fullImg);
+                    window.OmekaDipMediaQueue.revokeBlobUrl(fullImg);
+                }
                 fullImg.removeAttribute('src');
                 fullImg.removeAttribute('data-dip-src');
                 fullImg.removeAttribute('data-dip-loaded');
@@ -328,6 +387,7 @@
                 fullImg.alt = '';
                 if (caption) {
                     caption.textContent = '';
+                    caption.classList.remove('is-loading');
                 }
                 delete dialog.dataset.dipLightboxIndex;
             });
