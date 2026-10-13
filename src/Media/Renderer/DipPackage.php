@@ -57,6 +57,7 @@ class DipPackage implements RendererInterface
         return $view->partial('omeka-dip-viewer/media-render', [
             'media' => $media,
             'index' => $index,
+            'previewManifest' => $this->dipIndexService->getPreviewManifest($media),
             'galleryFiles' => $galleryFiles,
             'videoFiles' => $videoFiles,
             'galleryMaxDisplay' => $galleryMaxDisplay,

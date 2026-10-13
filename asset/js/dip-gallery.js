@@ -2,6 +2,7 @@
     'use strict';
 
     var TAP_THRESHOLD_PX = 10;
+    var SWIPE_THRESHOLD_PX = 48;
 
     function getGalleryIndex(root) {
         if (root._dipGalleryIndex) {
@@ -64,7 +65,21 @@
         }
         var entry = items[index];
         dialog.dataset.dipLightboxIndex = String(index);
-        fullImg.src = entry.src;
+        var thumbSrc = entry.src;
+        var fullSrc = entry.fullSrc || entry.src;
+        fullImg.removeAttribute('data-dip-loaded');
+        fullImg.removeAttribute('data-dip-queued');
+        if (thumbSrc && fullSrc !== thumbSrc) {
+            fullImg.src = thumbSrc;
+        } else {
+            fullImg.removeAttribute('src');
+        }
+        if (window.OmekaDipMediaQueue) {
+            window.OmekaDipMediaQueue.loadImage(fullImg, fullSrc, { priority: true });
+            prefetchLightboxNeighbors(root, index);
+        } else {
+            fullImg.src = fullSrc;
+        }
         fullImg.alt = entry.label || '';
         if (caption) {
             if (items.length > 1) {
@@ -86,6 +101,70 @@
             return;
         }
         showLightboxAtIndex(root, idx, dialog, fullImg, caption);
+    }
+
+    function bindLightboxSwipe(root, dialog, fullImg, caption) {
+        if (dialog._dipLightboxSwipeBound) {
+            return;
+        }
+        dialog._dipLightboxSwipeBound = true;
+        var body = dialog.querySelector('.omeka-dip-gallery-dialog-body') || dialog;
+        var startX = 0;
+        var startY = 0;
+        var tracking = false;
+
+        body.addEventListener(
+            'pointerdown',
+            function (event) {
+                if (!dialog.open || event.button !== 0) {
+                    return;
+                }
+                if (event.target.closest('.omeka-dip-gallery-close')) {
+                    return;
+                }
+                tracking = true;
+                startX = event.clientX;
+                startY = event.clientY;
+            },
+            { passive: true }
+        );
+
+        function finishSwipe(event) {
+            if (!tracking || !dialog.open) {
+                tracking = false;
+                return;
+            }
+            tracking = false;
+            var dx = event.clientX - startX;
+            var dy = event.clientY - startY;
+            if (Math.abs(dx) < SWIPE_THRESHOLD_PX || Math.abs(dx) < Math.abs(dy)) {
+                return;
+            }
+            event.preventDefault();
+            navigateLightbox(root, dx > 0 ? -1 : 1, dialog, fullImg, caption);
+        }
+
+        body.addEventListener('pointerup', finishSwipe);
+        body.addEventListener('pointercancel', function () {
+            tracking = false;
+        });
+    }
+
+    function bindLightboxNavButtons(root, dialog, fullImg, caption) {
+        if (dialog._dipLightboxNavBound) {
+            return;
+        }
+        dialog._dipLightboxNavBound = true;
+        dialog.querySelectorAll('[data-dip-lightbox-nav]').forEach(function (btn) {
+            btn.addEventListener('click', function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                var delta = parseInt(btn.getAttribute('data-dip-lightbox-nav') || '0', 10);
+                if (delta) {
+                    navigateLightbox(root, delta, dialog, fullImg, caption);
+                }
+            });
+        });
     }
 
     function bindLightboxKeyboard(root, dialog, fullImg, caption) {
@@ -113,6 +192,37 @@
         }
         document.removeEventListener('keydown', dialog._dipLightboxKeyHandler, true);
         dialog._dipLightboxKeyHandler = null;
+    }
+
+    function prefetchLightboxNeighbors(root, index) {
+        if (!window.OmekaDipMediaQueue || !window.OmekaDipMediaQueue.prefetchUrl) {
+            return;
+        }
+        var items = getGalleryIndex(root);
+        [-1, 1, 2].forEach(function (delta) {
+            var i = index + delta;
+            if (i < 0 || i >= items.length) {
+                return;
+            }
+            var url = items[i].fullSrc || items[i].src;
+            if (url) {
+                window.OmekaDipMediaQueue.prefetchUrl(url);
+            }
+        });
+    }
+
+    function prefetchInitialFullImages(root) {
+        if (!window.OmekaDipMediaQueue || !window.OmekaDipMediaQueue.prefetchUrl) {
+            return;
+        }
+        var items = getGalleryIndex(root);
+        var limit = Math.min(items.length, 6);
+        for (var i = 0; i < limit; i++) {
+            var url = items[i].fullSrc || items[i].src;
+            if (url) {
+                window.OmekaDipMediaQueue.prefetchUrl(url);
+            }
+        }
     }
 
     function navigateLightbox(root, delta, dialog, fullImg, caption) {
@@ -188,6 +298,8 @@
         }
 
         bindViewportTap(root, dialog, fullImg, caption);
+        bindLightboxSwipe(root, dialog, fullImg, caption);
+        bindLightboxNavButtons(root, dialog, fullImg, caption);
 
         root.querySelectorAll('.omeka-dip-gallery-open:not([data-dip-lightbox-bound])').forEach(function (slide) {
             slide.setAttribute('data-dip-lightbox-bound', '1');
@@ -210,6 +322,9 @@
             dialog.addEventListener('close', function () {
                 unbindLightboxKeyboard(dialog);
                 fullImg.removeAttribute('src');
+                fullImg.removeAttribute('data-dip-src');
+                fullImg.removeAttribute('data-dip-loaded');
+                fullImg.removeAttribute('data-dip-queued');
                 fullImg.alt = '';
                 if (caption) {
                     caption.textContent = '';
@@ -290,10 +405,18 @@
                     wrap.remove();
                 }
                 initLightbox(root);
+                if (window.OmekaDipMediaQueue) {
+                    window.OmekaDipMediaQueue.scan(root);
+                }
                 if (embla) {
                     embla.reInit();
                 }
             });
+        }
+
+        if (window.OmekaDipMediaQueue) {
+            window.OmekaDipMediaQueue.scan(root);
+            prefetchInitialFullImages(root);
         }
     }
 

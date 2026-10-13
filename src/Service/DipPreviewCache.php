@@ -28,22 +28,23 @@ class DipPreviewCache
         return $dir . '/fallback-' . $hash . '-' . $versionKey . '.jpg';
     }
 
-    public function isFresh(string $cachePath, string $tarPath): bool
+    public function packagedExtractPath(int $mediaId, string $innerPath): string
     {
-        if (!is_readable($cachePath)) {
-            return false;
-        }
-        $tarMtime = @filemtime($tarPath) ?: 0;
-        $cacheMtime = @filemtime($cachePath) ?: 0;
+        $dir = $this->mediaDir($mediaId);
+        $hash = substr(hash('sha256', $innerPath), 0, 16);
+        $base = basename(str_replace('\\', '/', $innerPath));
 
-        return $cacheMtime >= $tarMtime;
+        return $dir . '/packaged-' . $hash . '-' . $base;
     }
 
     protected function mediaDir(int $mediaId): string
     {
         $base = $this->dipConfig->getPreviewCacheDirectory();
         $dir = $base . '/' . $mediaId;
-        if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) {
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+        if (!is_dir($dir)) {
             throw new \RuntimeException('Cannot create DIP preview cache directory.');
         }
 

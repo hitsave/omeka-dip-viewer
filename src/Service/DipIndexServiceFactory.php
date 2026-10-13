@@ -11,7 +11,9 @@ class DipIndexServiceFactory implements FactoryInterface
         return new DipIndexService(
             $services->get(MetsParser::class),
             $services->get('Omeka\File\Store'),
-            $services->get(DipConfig::class)
+            $services->get(DipConfig::class),
+            $services->get(DipPackageLocator::class),
+            $services->get(DipS3ObjectStore::class)
         );
     }
 }

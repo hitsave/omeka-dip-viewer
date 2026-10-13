@@ -70,6 +70,11 @@ class DipConfig
         return $this->resolvePathUnderOmekaRoot('data/dip_index_cache');
     }
 
+    public function getIndexCacheApcuTtlSeconds(): int
+    {
+        return max(0, $this->intSetting('index_cache_apcu_ttl_seconds', 3600));
+    }
+
     public function isVideoPlayerEnabled(): bool
     {
         return $this->boolSetting('video_player_enabled', true);

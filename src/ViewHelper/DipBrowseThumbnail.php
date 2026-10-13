@@ -32,7 +32,10 @@ class DipBrowseThumbnail extends AbstractHtmlElement
             return $thumbnail($item, $type, $attribs);
         }
 
-        $attribs['src'] = $url;
+        $this->browsePreview->registerMediaQueueScript($this->getView());
+
+        unset($attribs['src']);
+        $attribs['data-dip-src'] = $url;
         if (!isset($attribs['class'])) {
             $attribs['class'] = 'thumbnail omeka-dip-browse-preview';
         } elseif (strpos((string) $attribs['class'], 'omeka-dip-browse-preview') === false) {

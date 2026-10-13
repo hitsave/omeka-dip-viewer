@@ -1,6 +1,11 @@
 <?php
 namespace OmekaDipViewer;
 
+$omekaDipViewerAutoload = __DIR__ . '/vendor/autoload.php';
+if (is_readable($omekaDipViewerAutoload)) {
+    require_once $omekaDipViewerAutoload;
+}
+
 use OmekaDipViewer\Media\DipPackageMedia;
 use Laminas\EventManager\Event;
 use Laminas\EventManager\SharedEventManagerInterface;
@@ -23,6 +28,10 @@ class Module extends AbstractModule
     public function onBootstrap(MvcEvent $event)
     {
         parent::onBootstrap($event);
+        $autoload = __DIR__ . '/vendor/autoload.php';
+        if (is_readable($autoload)) {
+            require_once $autoload;
+        }
         $this->syncInstalledVersionIfNeeded();
         $this->addAclRules();
     }
@@ -100,10 +109,54 @@ class Module extends AbstractModule
             [$this, 'prepareSiteItemShowView']
         );
         $sharedEventManager->attach(
+            'Omeka\Controller\Site\Item',
+            'view.browse.before',
+            [$this, 'appendBrowsePreviewQueueScript']
+        );
+        $sharedEventManager->attach(
+            'Omeka\Controller\Site\Item',
+            'view.search.before',
+            [$this, 'appendBrowsePreviewQueueScript']
+        );
+        $sharedEventManager->attach(
+            'Omeka\Controller\Site\Page',
+            'view.show.before',
+            [$this, 'appendBrowsePreviewQueueScript']
+        );
+        $sharedEventManager->attach(
+            'Omeka\Controller\Site\Index',
+            'view.browse.before',
+            [$this, 'appendBrowsePreviewQueueScript']
+        );
+        $sharedEventManager->attach(
             'Omeka\View\Helper\Media',
             'view_helper.media.render_options',
             [$this, 'injectDipMediaRenderOptions']
         );
+        foreach (['api.post.create', 'api.post.update', 'api.post.delete'] as $eventName) {
+            $sharedEventManager->attach(
+                'Omeka\Api\Adapter\MediaAdapter',
+                $eventName,
+                [$this, 'invalidateDipIndexCacheOnMediaChange']
+            );
+        }
+    }
+
+    public function invalidateDipIndexCacheOnMediaChange(Event $event): void
+    {
+        $response = $event->getParam('response');
+        if (!$response) {
+            return;
+        }
+        $content = $response->getContent();
+        if (!is_array($content) || !isset($content['o:id'])) {
+            return;
+        }
+        $mediaId = (int) $content['o:id'];
+        if ($mediaId <= 0) {
+            return;
+        }
+        $this->getServiceLocator()->get('OmekaDipViewer\Service\DipIndexService')->invalidateIndexCache($mediaId);
     }
 
     /**
@@ -142,6 +195,19 @@ class Module extends AbstractModule
         $view->headLink()->appendStylesheet($view->assetUrl('css/admin-item.css', 'OmekaDipViewer'));
     }
 
+    public function appendBrowsePreviewQueueScript(Event $event): void
+    {
+        $view = $event->getTarget();
+        if (!$this->getServiceLocator()->get('OmekaDipViewer\Service\DipConfig')->isBrowsePreviewEnabled()) {
+            return;
+        }
+        $view->headScript()->appendFile(
+            $view->assetUrl('js/dip-media-queue.js', 'OmekaDipViewer'),
+            'text/javascript',
+            ['defer' => true]
+        );
+    }
+
     public function prepareSiteItemShowView(Event $event): void
     {
         $view = $event->getTarget();
@@ -162,6 +228,11 @@ class Module extends AbstractModule
         );
         $view->headScript()->appendFile(
             $view->assetUrl('js/dip-embla.js', 'OmekaDipViewer'),
+            'text/javascript',
+            ['defer' => true]
+        );
+        $view->headScript()->appendFile(
+            $view->assetUrl('js/dip-media-queue.js', 'OmekaDipViewer'),
             'text/javascript',
             ['defer' => true]
         );

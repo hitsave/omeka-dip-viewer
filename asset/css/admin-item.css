@@ -1,4 +1,4 @@
-/* DIP package: sidebar Media list only links to the .tar media show page. */
+/* DIP package: hide sidebar Media links to placeholder package media rows. */
 body.items.show .sidebar .meta-group:has(.value a[href*="/admin/media/"]) {
     display: none;
 }

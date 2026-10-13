@@ -87,6 +87,34 @@
             responsive: false,
         });
 
+        function selectedPick() {
+            for (var i = 0; i < picks.length; i++) {
+                if (picks[i].classList.contains('is-selected')) {
+                    return picks[i];
+                }
+            }
+            return picks[0] || null;
+        }
+
+        function primeDownloadUi(pick) {
+            if (!pick) {
+                return;
+            }
+            var label = pick.getAttribute('data-label') || '';
+            var downloadSrc = pick.getAttribute('data-download-src') || '#';
+            var sizeBytes = pick.getAttribute('data-size-bytes');
+            if (caption && !caption.textContent) {
+                caption.textContent = label;
+            }
+            if (downloadLink && downloadLink.getAttribute('href') === '#') {
+                downloadLink.href = downloadSrc;
+                downloadLink.textContent = label;
+            }
+            if (downloadSize && !downloadSize.textContent) {
+                downloadSize.textContent = formatBytes(sizeBytes);
+            }
+        }
+
         function applyPick(pick) {
             if (!pick) {
                 return;
@@ -126,9 +154,14 @@
 
         if (embla) {
             embla.on('select', function () {
+                if (root.dataset.dipVideoStarted !== '1') {
+                    return;
+                }
                 applyPick(picks[embla.selectedScrollSnap()]);
             });
         }
+
+        primeDownloadUi(selectedPick());
 
         picks.forEach(function (pick, index) {
             var pointerDragged = false;
@@ -142,6 +175,7 @@
                 if (pointerDragged) {
                     return;
                 }
+                root.dataset.dipVideoStarted = '1';
                 applyPick(pick);
                 if (embla) {
                     embla.scrollTo(index);
@@ -157,7 +191,10 @@
         });
 
         player.ready(function () {
-            applyPick(picks[0]);
+            player.one('play', function () {
+                root.dataset.dipVideoStarted = '1';
+                applyPick(selectedPick());
+            });
         });
     }
 
