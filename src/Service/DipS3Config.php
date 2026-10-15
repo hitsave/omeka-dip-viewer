@@ -3,6 +3,9 @@ namespace OmekaDipViewer\Service;
 
 /**
  * Wasabi/S3 connection settings (config/dip-s3.config.php).
+ *
+ * Bucket is optional: each DIP media should carry bucket in dip_wasabi_uri / package_wasabi_uri.
+ * When only package_storage_prefix is set, getBucket() is used as a legacy default.
  */
 class DipS3Config
 {
@@ -23,7 +26,7 @@ class DipS3Config
         $key = trim((string) ($creds['key'] ?? ''));
         $secret = trim((string) ($creds['secret'] ?? ''));
 
-        return $this->getBucket() !== '' && $key !== '' && $secret !== ''
+        return $key !== '' && $secret !== '' && $this->getEndpoint() !== ''
             && !str_starts_with($key, 'REPLACE');
     }
 

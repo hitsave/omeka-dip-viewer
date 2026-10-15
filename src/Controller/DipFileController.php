@@ -105,8 +105,8 @@ class DipFileController extends AbstractActionController
         $services = $this->getEvent()->getApplication()->getServiceManager();
         /** @var DipIndexService $indexService */
         $indexService = $services->get(DipIndexService::class);
-        $s3Prefix = $indexService->resolveS3Prefix($media);
-        if ($s3Prefix === null) {
+        $s3Location = $indexService->resolveS3Location($media);
+        if ($s3Location === null) {
             return $this->getResponse()->setStatusCode(500);
         }
 
@@ -115,7 +115,8 @@ class DipFileController extends AbstractActionController
                 $media,
                 $mediaId,
                 $fileKey,
-                $s3Prefix,
+                $s3Location['bucket'],
+                $s3Location['prefix'],
                 $indexService,
                 $services
             );
@@ -145,10 +146,18 @@ class DipFileController extends AbstractActionController
             return $this->getResponse()->setStatusCode(404);
         }
 
-        return $this->sendS3ObjectResponse($s3Prefix, $innerPath, $mime, $label, $services);
+        return $this->sendS3ObjectResponse(
+            $s3Location['bucket'],
+            $s3Location['prefix'],
+            $innerPath,
+            $mime,
+            $label,
+            $services
+        );
     }
 
     protected function sendS3ObjectResponse(
+        string $bucket,
         string $prefix,
         string $innerPath,
         string $mime,
@@ -158,7 +167,7 @@ class DipFileController extends AbstractActionController
         /** @var DipS3ObjectStore $s3 */
         $s3 = $services->get(DipS3ObjectStore::class);
         try {
-            $size = $s3->headContentLength($prefix, $innerPath);
+            $size = $s3->headContentLength($prefix, $innerPath, $bucket);
         } catch (\Throwable $e) {
             return $this->getResponse()->setStatusCode(404);
         }
@@ -182,7 +191,7 @@ class DipFileController extends AbstractActionController
                 return $response;
             }
             try {
-                $part = $s3->getObjectRange($prefix, $innerPath, $start, $end);
+                $part = $s3->getObjectRange($prefix, $innerPath, $start, $end, $bucket);
             } catch (\Throwable $e) {
                 return $this->getResponse()->setStatusCode(404);
             }
@@ -197,7 +206,7 @@ class DipFileController extends AbstractActionController
         }
 
         try {
-            $object = $s3->getObjectRange($prefix, $innerPath, null, null);
+            $object = $s3->getObjectRange($prefix, $innerPath, null, null, $bucket);
         } catch (\Throwable $e) {
             return $this->getResponse()->setStatusCode(404);
         }
@@ -211,6 +220,7 @@ class DipFileController extends AbstractActionController
         $media,
         int $mediaId,
         string $fileKey,
+        string $s3Bucket,
         string $s3Prefix,
         DipIndexService $indexService,
         $services
@@ -228,7 +238,7 @@ class DipFileController extends AbstractActionController
             try {
                 /** @var DipS3ObjectStore $s3 */
                 $s3 = $services->get(DipS3ObjectStore::class);
-                $bytes = $s3->getObject($s3Prefix, $innerPath);
+                $bytes = $s3->getObject($s3Prefix, $innerPath, $s3Bucket);
                 $dir = dirname($cachePath);
                 if (!is_dir($dir)) {
                     mkdir($dir, 0755, true);
