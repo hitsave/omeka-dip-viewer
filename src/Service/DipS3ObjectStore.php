@@ -29,10 +29,10 @@ class DipS3ObjectStore
         return $prefix === '' ? $inner : $prefix . '/' . $inner;
     }
 
-    public function getObject(string $packagePrefix, string $innerPath): string
+    public function getObject(string $packagePrefix, string $innerPath, ?string $bucket = null): string
     {
         $result = $this->client()->getObject([
-            'Bucket' => $this->config->getBucket(),
+            'Bucket' => $this->resolveBucket($bucket),
             'Key' => $this->objectKey($packagePrefix, $innerPath),
         ]);
         $body = $result['Body'] ?? null;
@@ -50,10 +50,11 @@ class DipS3ObjectStore
         string $packagePrefix,
         string $innerPath,
         ?int $start = null,
-        ?int $end = null
+        ?int $end = null,
+        ?string $bucket = null
     ): array {
         $args = [
-            'Bucket' => $this->config->getBucket(),
+            'Bucket' => $this->resolveBucket($bucket),
             'Key' => $this->objectKey($packagePrefix, $innerPath),
         ];
         if ($start !== null && $end !== null) {
@@ -71,14 +72,30 @@ class DipS3ObjectStore
         ];
     }
 
-    public function headContentLength(string $packagePrefix, string $innerPath): int
+    public function headContentLength(string $packagePrefix, string $innerPath, ?string $bucket = null): int
     {
         $result = $this->client()->headObject([
-            'Bucket' => $this->config->getBucket(),
+            'Bucket' => $this->resolveBucket($bucket),
             'Key' => $this->objectKey($packagePrefix, $innerPath),
         ]);
 
         return (int) ($result['ContentLength'] ?? 0);
+    }
+
+    protected function resolveBucket(?string $bucket): string
+    {
+        $resolved = trim((string) ($bucket ?? ''));
+        if ($resolved !== '') {
+            return $resolved;
+        }
+        $default = $this->config->getBucket();
+        if ($default === '') {
+            throw new \InvalidArgumentException(
+                'S3 bucket required: set dip_wasabi_uri on the media or a default bucket in dip-s3.config.php.'
+            );
+        }
+
+        return $default;
     }
 
     protected function client(): S3Client

@@ -10,7 +10,8 @@ class DipPackageLocatorFactory implements FactoryInterface
     {
         return new DipPackageLocator(
             $services->get('Omeka\File\Store'),
-            $services->get(DipS3ObjectStore::class)
+            $services->get(DipS3ObjectStore::class),
+            $services->get(DipS3Config::class)
         );
     }
 }

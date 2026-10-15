@@ -52,7 +52,11 @@ class DipIndexService
 
             return null;
         }
-        $index = $this->buildIndexFromS3Prefix($mediaId, (string) $located['prefix']);
+        $index = $this->buildIndexFromS3Prefix(
+            $mediaId,
+            (string) $located['bucket'],
+            (string) $located['prefix']
+        );
         $this->requestCache[$mediaId] = $index;
 
         return $index;
@@ -89,8 +93,11 @@ class DipIndexService
             return null;
         }
         if ($located['type'] === 's3') {
-            $prefix = (string) $located['prefix'];
-            $manifest = $this->readPreviewManifestFromS3($mediaId, $prefix);
+            $manifest = $this->readPreviewManifestFromS3(
+                $mediaId,
+                (string) $located['bucket'],
+                (string) $located['prefix']
+            );
             $this->manifestRequestCache[$mediaId] = is_array($manifest) ? $manifest : false;
 
             return is_array($manifest) ? $manifest : null;
@@ -139,12 +146,25 @@ class DipIndexService
 
     public function resolveS3Prefix(MediaRepresentation $media): ?string
     {
+        $location = $this->resolveS3Location($media);
+
+        return $location !== null ? $location['prefix'] : null;
+    }
+
+    /**
+     * @return array{bucket: string, prefix: string}|null
+     */
+    public function resolveS3Location(MediaRepresentation $media): ?array
+    {
         $located = $this->locator->locate($media);
         if ($located === null || $located['type'] !== 's3') {
             return null;
         }
 
-        return (string) $located['prefix'];
+        return [
+            'bucket' => (string) $located['bucket'],
+            'prefix' => (string) $located['prefix'],
+        ];
     }
 
     public function packageIsAvailable(MediaRepresentation $media): bool
@@ -155,9 +175,9 @@ class DipIndexService
     /**
      * @return array{bagit_anchor_relpath: string, package_uuid: ?string, files: array, tree: array}|null
      */
-    protected function buildIndexFromS3Prefix(int $mediaId, string $prefix): ?array
+    protected function buildIndexFromS3Prefix(int $mediaId, string $bucket, string $prefix): ?array
     {
-        $identity = 's3:' . $prefix;
+        $identity = 's3:' . $bucket . '/' . $prefix;
         $cacheFile = $this->cacheFilePathForIdentity($mediaId, $identity);
         $apcuKey = $this->apcuCacheKey($mediaId, $identity);
         if ($cacheFile !== null) {
@@ -180,15 +200,15 @@ class DipIndexService
         }
 
         try {
-            $inventoryRaw = $this->s3->getObject($prefix, 'metadata/inventory.json');
+            $inventoryRaw = $this->s3->getObject($prefix, 'metadata/inventory.json', $bucket);
             $inventory = json_decode($inventoryRaw, true);
             if (!is_array($inventory)) {
                 throw new \RuntimeException('Invalid inventory.json on S3.');
             }
-            $preview = $this->readPreviewManifestFromS3($mediaId, $prefix);
+            $preview = $this->readPreviewManifestFromS3($mediaId, $bucket, $prefix);
             $packageUuid = null;
             try {
-                $subRaw = $this->s3->getObject($prefix, 'metadata/submission.json');
+                $subRaw = $this->s3->getObject($prefix, 'metadata/submission.json', $bucket);
                 $sub = json_decode($subRaw, true);
                 if (is_array($sub) && !empty($sub['package_uuid'])) {
                     $packageUuid = (string) $sub['package_uuid'];
@@ -212,9 +232,9 @@ class DipIndexService
     /**
      * @return array<string, mixed>|null
      */
-    protected function readPreviewManifestFromS3(int $mediaId, string $prefix): ?array
+    protected function readPreviewManifestFromS3(int $mediaId, string $bucket, string $prefix): ?array
     {
-        $identity = 's3:' . $prefix;
+        $identity = 's3:' . $bucket . '/' . $prefix;
         $manifestCacheFile = $this->manifestCacheFilePathForIdentity($mediaId, $identity);
         if ($manifestCacheFile !== null) {
             $cached = $this->readManifestCacheFile($manifestCacheFile);
@@ -223,7 +243,7 @@ class DipIndexService
             }
         }
         try {
-            $raw = $this->s3->getObject($prefix, 'metadata/hitsave/preview-manifest.json');
+            $raw = $this->s3->getObject($prefix, 'metadata/hitsave/preview-manifest.json', $bucket);
         } catch (\Throwable $e) {
             return null;
         }

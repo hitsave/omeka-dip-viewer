@@ -1,11 +1,14 @@
 <?php
 /**
  * Wasabi / S3 credentials for direct BagIt object reads (copy to dip-s3.config.php).
+ *
+ * Bucket is optional: OmekaDipViewer reads the bucket from each media dip_wasabi_uri.
+ * Set bucket only when legacy media has package_storage_prefix but no s3:// URI.
  */
 return [
     'endpoint' => 'https://s3.us-east-2.wasabisys.com',
     'region' => 'us-east-2',
-    'bucket' => 'hitsave-incoming',
+    'bucket' => '',
     'credentials' => [
         'key' => 'REPLACE_ME',
         'secret' => 'REPLACE_ME',
