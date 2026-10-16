@@ -103,8 +103,13 @@ body.item.resource.show.omeka-dip-item-layout .omeka-dip-size {
 }
 
 /* Dump packaged previews (often a single DVD menu still). */
-.omeka-dip-packaged-previews.omeka-dip-gallery--count-1 .omeka-dip-packaged-preview-hero {
-    max-width: min(100%, 42rem);
+.omeka-dip-promoted-full-width {
+    margin-bottom: 1.25rem;
+}
+
+.omeka-dip-packaged-previews.omeka-dip-gallery--count-1 .omeka-dip-embla__slide {
+    flex: 0 0 auto;
+    width: min(100%, 42rem);
 }
 
 .omeka-dip-packaged-previews.omeka-dip-gallery--count-1 .omeka-dip-gallery-thumb {
@@ -114,13 +119,9 @@ body.item.resource.show.omeka-dip-item-layout .omeka-dip-size {
     background: #111;
 }
 
-.omeka-dip-packaged-previews .omeka-dip-embla__slide {
+.omeka-dip-packaged-previews:not(.omeka-dip-gallery--count-1) .omeka-dip-embla__slide {
     flex: 0 0 auto;
     width: min(100%, 11rem);
-}
-
-.omeka-dip-packaged-previews .omeka-dip-embla__viewport {
-    cursor: grab;
 }
 
 .omeka-dip-gallery-note {

@@ -358,6 +358,10 @@
 
         root.querySelectorAll('.omeka-dip-gallery-open:not([data-dip-lightbox-bound])').forEach(function (slide) {
             slide.setAttribute('data-dip-lightbox-bound', '1');
+            slide.addEventListener('click', function (event) {
+                event.preventDefault();
+                openLightboxFromSlide(slide, root, dialog, fullImg, caption);
+            });
             slide.addEventListener('keydown', function (event) {
                 if (event.key !== 'Enter' && event.key !== ' ') {
                     return;
@@ -480,7 +484,23 @@
         }
     }
 
+    function promoteDipMediaToFullWidth() {
+        var stack = document.querySelector('.stack');
+        if (!stack || stack.querySelector('.full-width-main .omeka-dip-package')) {
+            return;
+        }
+        var mediaCol = stack.querySelector('.omeka-dip-package__media');
+        if (!mediaCol || !mediaCol.querySelector('.omeka-dip-gallery')) {
+            return;
+        }
+        var wrap = document.createElement('div');
+        wrap.className = 'full-width-main omeka-dip-promoted-full-width';
+        stack.insertBefore(wrap, stack.firstChild);
+        wrap.appendChild(mediaCol);
+    }
+
     function boot() {
+        promoteDipMediaToFullWidth();
         document.querySelectorAll('.omeka-dip-gallery').forEach(initGallery);
     }
 
