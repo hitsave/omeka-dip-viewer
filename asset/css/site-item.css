@@ -124,6 +124,24 @@ body.item.resource.show.omeka-dip-item-layout .omeka-dip-size {
     width: min(100%, 11rem);
 }
 
+.omeka-dip-native-media.omeka-dip-gallery--count-1 .omeka-dip-embla__slide {
+    flex: 0 0 auto;
+    width: min(100%, 42rem);
+}
+
+.omeka-dip-native-media.omeka-dip-gallery--count-1 .omeka-dip-gallery-thumb {
+    height: auto;
+    max-height: min(70vh, 520px);
+    width: 100%;
+    object-fit: contain;
+    background: #111;
+}
+
+.omeka-dip-native-media:not(.omeka-dip-gallery--count-1) .omeka-dip-embla__slide {
+    flex: 0 0 auto;
+    width: min(100%, 11rem);
+}
+
 .omeka-dip-gallery-note {
     font-size: 0.9rem;
     color: #555;

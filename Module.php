@@ -212,7 +212,12 @@ class Module extends AbstractModule
     {
         $view = $event->getTarget();
         $item = $this->getItemFromView($view);
-        if (!$item || !$this->itemHasDipPackageMedia($item)) {
+        if (!$item) {
+            return;
+        }
+        $hasDip = $this->itemHasDipPackageMedia($item);
+        $hasNativeGallery = $this->itemHasNativeEmbedGalleryMedia($item);
+        if (!$hasDip && !$hasNativeGallery) {
             return;
         }
         $view->headLink()->appendStylesheet($view->assetUrl('css/site-item.css', 'OmekaDipViewer'));
@@ -231,32 +236,36 @@ class Module extends AbstractModule
             'text/javascript',
             ['defer' => true]
         );
-        $view->headScript()->appendFile(
-            $view->assetUrl('js/dip-media-queue.js', 'OmekaDipViewer'),
-            'text/javascript',
-            ['defer' => true]
-        );
+        if ($hasDip) {
+            $view->headScript()->appendFile(
+                $view->assetUrl('js/dip-media-queue.js', 'OmekaDipViewer'),
+                'text/javascript',
+                ['defer' => true]
+            );
+        }
         $view->headScript()->appendFile(
             $view->assetUrl('js/dip-gallery.js', 'OmekaDipViewer'),
             'text/javascript',
             ['defer' => true]
         );
-        $view->headLink()->appendStylesheet($view->assetUrl('css/video-js.min.css', 'OmekaDipViewer'));
-        $view->headScript()->appendFile(
-            $view->assetUrl('js/video.min.js', 'OmekaDipViewer'),
-            'text/javascript',
-            ['defer' => true]
-        );
-        $view->headScript()->appendFile(
-            $view->assetUrl('js/dip-videos.js', 'OmekaDipViewer'),
-            'text/javascript',
-            ['defer' => true]
-        );
-        $view->headScript()->appendFile(
-            $view->assetUrl('js/dip-layout.js', 'OmekaDipViewer'),
-            'text/javascript',
-            ['defer' => true]
-        );
+        if ($hasDip) {
+            $view->headLink()->appendStylesheet($view->assetUrl('css/video-js.min.css', 'OmekaDipViewer'));
+            $view->headScript()->appendFile(
+                $view->assetUrl('js/video.min.js', 'OmekaDipViewer'),
+                'text/javascript',
+                ['defer' => true]
+            );
+            $view->headScript()->appendFile(
+                $view->assetUrl('js/dip-videos.js', 'OmekaDipViewer'),
+                'text/javascript',
+                ['defer' => true]
+            );
+            $view->headScript()->appendFile(
+                $view->assetUrl('js/dip-layout.js', 'OmekaDipViewer'),
+                'text/javascript',
+                ['defer' => true]
+            );
+        }
     }
 
     /**
@@ -306,6 +315,20 @@ class Module extends AbstractModule
     {
         foreach ($item->media() as $media) {
             if (DipPackageMedia::isDipPackage($media->renderer())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Omeka-ingested files (press kits, etc.) shown in mediaEmbeds with thumbnails. */
+    protected function itemHasNativeEmbedGalleryMedia(ItemRepresentation $item): bool
+    {
+        foreach ($item->media() as $media) {
+            if (DipPackageMedia::isDipPackage($media->renderer())) {
+                continue;
+            }
+            if ($media->thumbnail()) {
                 return true;
             }
         }

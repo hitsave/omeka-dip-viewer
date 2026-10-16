@@ -499,8 +499,123 @@
         wrap.appendChild(mediaCol);
     }
 
+    function isDisplayableImageUrl(url) {
+        return /\.(jpe?g|png|gif|webp|avif|bmp)(\?|#|$)/i.test(url || '');
+    }
+
+    function collectNativeMediaEmbedEntries(embeds) {
+        var entries = [];
+        embeds.querySelectorAll('.media-render.file').forEach(function (render, idx) {
+            var link = render.querySelector('a[href]');
+            var img = render.querySelector('img[src]');
+            if (!link || !img) {
+                return;
+            }
+            var thumbSrc = img.getAttribute('src') || '';
+            if (!thumbSrc) {
+                return;
+            }
+            var downloadHref = link.getAttribute('href') || '';
+            var nameEl = render.querySelector('.resource-name');
+            var label =
+                link.getAttribute('title') ||
+                (nameEl && nameEl.textContent ? nameEl.textContent.trim() : '') ||
+                'Media ' + (idx + 1);
+            var fullSrc = isDisplayableImageUrl(downloadHref) ? downloadHref : thumbSrc;
+            entries.push({
+                key: String(idx),
+                src: thumbSrc,
+                fullSrc: fullSrc,
+                label: label,
+                downloadHref: downloadHref,
+            });
+        });
+        return entries;
+    }
+
+    function appendGalleryDialog(section) {
+        var dialog = document.createElement('dialog');
+        dialog.className = 'omeka-dip-gallery-dialog';
+        dialog.setAttribute('aria-label', 'Enlarged image');
+        dialog.innerHTML =
+            '<form method="dialog"><button type="submit" class="omeka-dip-gallery-close" aria-label="Close">×</button></form>' +
+            '<button type="button" class="omeka-dip-gallery-lightbox-prev" data-dip-lightbox-nav="-1" aria-label="Previous image">‹</button>' +
+            '<button type="button" class="omeka-dip-gallery-lightbox-next" data-dip-lightbox-nav="1" aria-label="Next image">›</button>' +
+            '<figure class="omeka-dip-gallery-dialog-body">' +
+            '<img src="" alt="" class="omeka-dip-gallery-full" draggable="false">' +
+            '<figcaption class="omeka-dip-gallery-caption"></figcaption>' +
+            '</figure>';
+        section.appendChild(dialog);
+    }
+
+    function buildNativeMediaGalleryFromEmbeds() {
+        var embeds = document.querySelector('#content .media-embeds');
+        if (!embeds || embeds.dataset.omekaDipNativeGallery === '1') {
+            return;
+        }
+        if (embeds.querySelector('.omeka-dip-gallery')) {
+            return;
+        }
+        var entries = collectNativeMediaEmbedEntries(embeds);
+        if (!entries.length) {
+            return;
+        }
+
+        embeds.dataset.omekaDipNativeGallery = '1';
+        embeds.textContent = '';
+
+        var section = document.createElement('section');
+        section.className =
+            'omeka-dip-gallery omeka-dip-native-media' +
+            (entries.length === 1 ? ' omeka-dip-gallery--count-1' : '');
+        section.setAttribute('aria-label', 'Media preview');
+
+        var indexEl = document.createElement('script');
+        indexEl.type = 'application/json';
+        indexEl.className = 'omeka-dip-gallery-index';
+        indexEl.textContent = JSON.stringify(entries);
+        section.appendChild(indexEl);
+
+        var embla = document.createElement('div');
+        embla.className = 'omeka-dip-embla';
+        embla.innerHTML =
+            '<div class="omeka-dip-embla__viewport"><div class="omeka-dip-embla__container"></div></div>' +
+            '<div class="omeka-dip-embla__controls">' +
+            '<button type="button" class="omeka-dip-embla__prev button secondary" aria-label="Previous">‹</button>' +
+            '<button type="button" class="omeka-dip-embla__next button secondary" aria-label="Next">›</button>' +
+            '</div>';
+        var container = embla.querySelector('.omeka-dip-embla__container');
+
+        entries.forEach(function (entry) {
+            var slide = document.createElement('div');
+            slide.className = 'omeka-dip-embla__slide omeka-dip-gallery-item';
+            var open = document.createElement('div');
+            open.className = 'omeka-dip-gallery-open';
+            open.setAttribute('role', 'button');
+            open.setAttribute('tabindex', '0');
+            open.setAttribute('data-dip-key', entry.key);
+            open.setAttribute('data-dip-src', entry.src);
+            open.setAttribute('data-dip-full-src', entry.fullSrc);
+            open.setAttribute('data-dip-label', entry.label);
+            var img = document.createElement('img');
+            img.className = 'omeka-dip-gallery-thumb';
+            img.src = entry.src;
+            img.alt = entry.label;
+            img.decoding = 'async';
+            img.draggable = false;
+            open.appendChild(img);
+            slide.appendChild(open);
+            container.appendChild(slide);
+        });
+
+        section.appendChild(embla);
+        appendGalleryDialog(section);
+        embeds.appendChild(section);
+    }
+
     function boot() {
         promoteDipMediaToFullWidth();
+        buildNativeMediaGalleryFromEmbeds();
         document.querySelectorAll('.omeka-dip-gallery').forEach(initGallery);
     }
 
