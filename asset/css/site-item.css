@@ -102,6 +102,27 @@ body.item.resource.show.omeka-dip-item-layout .omeka-dip-size {
     margin-bottom: 1.5rem;
 }
 
+/* Dump packaged previews (often a single DVD menu still). */
+.omeka-dip-packaged-previews.omeka-dip-gallery--count-1 .omeka-dip-packaged-preview-hero {
+    max-width: min(100%, 42rem);
+}
+
+.omeka-dip-packaged-previews.omeka-dip-gallery--count-1 .omeka-dip-gallery-thumb {
+    height: auto;
+    max-height: min(70vh, 520px);
+    object-fit: contain;
+    background: #111;
+}
+
+.omeka-dip-packaged-previews .omeka-dip-embla__slide {
+    flex: 0 0 auto;
+    width: min(100%, 11rem);
+}
+
+.omeka-dip-packaged-previews .omeka-dip-embla__viewport {
+    cursor: grab;
+}
+
 .omeka-dip-gallery-note {
     font-size: 0.9rem;
     color: #555;

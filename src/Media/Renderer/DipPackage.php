@@ -12,6 +12,9 @@ use Laminas\View\Renderer\PhpRenderer;
 
 class DipPackage implements RendererInterface
 {
+    /** @var array<int, true> */
+    private static array $renderedMediaIds = [];
+
     protected DipIndexService $dipIndexService;
     protected DipConfig $dipConfig;
     protected DipGalleryFilter $galleryFilter;
@@ -34,6 +37,12 @@ class DipPackage implements RendererInterface
 
     public function render(PhpRenderer $view, MediaRepresentation $media, array $options = [])
     {
+        $mediaId = (int) $media->id();
+        if (isset(self::$renderedMediaIds[$mediaId])) {
+            return '';
+        }
+        self::$renderedMediaIds[$mediaId] = true;
+
         $siteSlug = isset($options['omeka_dip_site_slug'])
             ? (string) $options['omeka_dip_site_slug']
             : $this->resolveSiteSlug($view);

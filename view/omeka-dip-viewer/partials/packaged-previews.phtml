@@ -9,26 +9,57 @@ if ($total === 0) {
 $galleryIndex = [];
 foreach ($previewKeys as $fileKey) {
     $fileKey = (string) $fileKey;
-    $thumbSrc = $this->dipFileUrl($itemId, $mediaId, $fileKey, 'thumb', $siteSlug ?? null);
-    $fullSrc = $this->dipFileUrl($itemId, $mediaId, $fileKey, null, $siteSlug ?? null);
+    $thumbHref = $this->dipFileUrl($itemId, $mediaId, $fileKey, 'thumb', $siteSlug ?? null);
+    $fullHref = $this->dipFileUrl($itemId, $mediaId, $fileKey, null, $siteSlug ?? null);
+    $label = $fileKey === 'menu' ? (string) $translate('DVD menu') : $fileKey;
     $galleryIndex[] = [
         'key' => $fileKey,
-        'src' => $thumbSrc,
-        'fullSrc' => $fullSrc,
-        'label' => $fileKey === 'menu' ? $translate('DVD menu') : $fileKey,
+        'src' => $thumbHref,
+        'fullSrc' => $fullHref,
+        'label' => $label,
     ];
 }
 $galleryIndexJson = json_encode(
     $galleryIndex,
     JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
 );
+$countClass = $total === 1 ? ' omeka-dip-gallery--count-1' : '';
 ?>
-<section class="omeka-dip-gallery omeka-dip-packaged-previews" aria-label="<?= $escape($translate('Package preview')) ?>">
+<section class="omeka-dip-gallery omeka-dip-packaged-previews<?= $countClass ?>" aria-label="<?= $escape($translate('Package preview')) ?>">
     <script type="application/json" class="omeka-dip-gallery-index"><?= $galleryIndexJson ?></script>
     <h4><?= $escape($translate('Preview')) ?></h4>
     <p class="omeka-dip-gallery-note">
         <?= $escape($translate('Packaged preview from the preservation copy. Disc images and other dump payload files are not published here.')) ?>
     </p>
+<?php if ($total === 1): ?>
+    <?php
+    $fileKey = (string) $previewKeys[0];
+    $thumbHref = $this->dipFileUrl($itemId, $mediaId, $fileKey, 'thumb', $siteSlug ?? null);
+    $fullHref = $this->dipFileUrl($itemId, $mediaId, $fileKey, null, $siteSlug ?? null);
+    $label = $fileKey === 'menu' ? (string) $translate('DVD menu') : $fileKey;
+    ?>
+    <div class="omeka-dip-packaged-preview-hero">
+        <div class="omeka-dip-embla__slide omeka-dip-gallery-item">
+            <div
+                class="omeka-dip-gallery-open"
+                role="button"
+                tabindex="0"
+                data-dip-key="<?= $escape($fileKey) ?>"
+                data-dip-src="<?= $escape($thumbHref) ?>"
+                data-dip-full-src="<?= $escape($fullHref) ?>"
+                data-dip-label="<?= $escape($label) ?>"
+            >
+                <img
+                    data-dip-src="<?= $escape($thumbHref) ?>"
+                    alt="<?= $escape($label) ?>"
+                    decoding="async"
+                    draggable="false"
+                    class="omeka-dip-gallery-thumb"
+                >
+            </div>
+        </div>
+    </div>
+<?php else: ?>
     <div class="omeka-dip-embla">
         <div class="omeka-dip-embla__viewport">
             <div class="omeka-dip-embla__container">
@@ -37,34 +68,36 @@ $galleryIndexJson = json_encode(
                 $fileKey = (string) $fileKey;
                 $thumbHref = $this->dipFileUrl($itemId, $mediaId, $fileKey, 'thumb', $siteSlug ?? null);
                 $fullHref = $this->dipFileUrl($itemId, $mediaId, $fileKey, null, $siteSlug ?? null);
-                $label = $fileKey === 'menu' ? $translate('DVD menu') : $fileKey;
+                $label = $fileKey === 'menu' ? (string) $translate('DVD menu') : $fileKey;
                 ?>
                 <div class="omeka-dip-embla__slide omeka-dip-gallery-item">
-                    <button
-                        type="button"
+                    <div
                         class="omeka-dip-gallery-open"
-                        data-dip-file-key="<?= $escape($fileKey) ?>"
+                        role="button"
+                        tabindex="0"
+                        data-dip-key="<?= $escape($fileKey) ?>"
+                        data-dip-src="<?= $escape($thumbHref) ?>"
                         data-dip-full-src="<?= $escape($fullHref) ?>"
-                        aria-label="<?= $escape($label) ?>"
+                        data-dip-label="<?= $escape($label) ?>"
                     >
                         <img
-                            src="<?= $escape($thumbHref) ?>"
+                            data-dip-src="<?= $escape($thumbHref) ?>"
                             alt="<?= $escape($label) ?>"
+                            decoding="async"
+                            draggable="false"
                             class="omeka-dip-gallery-thumb"
-                            loading="lazy"
                         >
-                    </button>
+                    </div>
                 </div>
                 <?php endforeach; ?>
             </div>
         </div>
-        <?php if ($total > 1): ?>
         <div class="omeka-dip-embla__controls">
             <button type="button" class="omeka-dip-embla__prev button secondary" aria-label="<?= $escape($translate('Previous')) ?>">‹</button>
             <button type="button" class="omeka-dip-embla__next button secondary" aria-label="<?= $escape($translate('Next')) ?>">›</button>
         </div>
-        <?php endif; ?>
     </div>
+<?php endif; ?>
     <dialog class="omeka-dip-gallery-dialog" aria-label="<?= $escape($translate('Enlarged image')) ?>">
         <form method="dialog">
             <button type="submit" class="omeka-dip-gallery-close" aria-label="<?= $escape($translate('Close')) ?>">×</button>
