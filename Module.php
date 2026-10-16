@@ -328,7 +328,8 @@ class Module extends AbstractModule
             if (DipPackageMedia::isDipPackage($media->renderer())) {
                 continue;
             }
-            if ($media->thumbnail()) {
+            // Bulk/legacy ingesters store thumbs on S3 (hasThumbnails) without o:thumbnail entity.
+            if ($media->hasThumbnails()) {
                 return true;
             }
         }
