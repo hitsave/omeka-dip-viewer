@@ -64,6 +64,7 @@ return [
             'OmekaDipViewer\Service\DipPackageLocator' => 'OmekaDipViewer\Service\DipPackageLocatorFactory',
         ],
         'invokables' => [
+            'OmekaDipViewer\Service\DipCatalogPolicy' => 'OmekaDipViewer\Service\DipCatalogPolicy',
             'OmekaDipViewer\Service\DipGalleryFilter' => 'OmekaDipViewer\Service\DipGalleryFilter',
             'OmekaDipViewer\Service\DipVideoFilter' => 'OmekaDipViewer\Service\DipVideoFilter',
             'OmekaDipViewer\Service\DipCollageBuilder' => 'OmekaDipViewer\Service\DipCollageBuilder',

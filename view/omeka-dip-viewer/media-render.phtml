@@ -26,6 +26,14 @@ $siteSlug = $siteSlug ?? null;
         'siteSlug' => $siteSlug,
     ]) ?>
 <?php endif; ?>
+<?php if (!empty($packagedPreviewKeys)): ?>
+    <?= $this->partial('omeka-dip-viewer/partials/packaged-previews', [
+        'packagedPreviewKeys' => $packagedPreviewKeys,
+        'mediaId' => $mediaId,
+        'itemId' => $itemId,
+        'siteSlug' => $siteSlug,
+    ]) ?>
+<?php endif; ?>
 <?php if ($largePackage): ?>
         <p class="omeka-dip-warning">
             <?= $escape(sprintf(
@@ -36,10 +44,12 @@ $siteSlug = $siteSlug ?? null;
         </p>
 <?php endif; ?>
     </div>
+<?php if (!empty($showPackageContents)): ?>
     <?= $this->partial('omeka-dip-viewer/partials/package-contents', [
         'media' => $media,
         'index' => $index,
         'itemId' => $itemId,
         'siteSlug' => $siteSlug,
     ]) ?>
+<?php endif; ?>
 </div>
