@@ -1,0 +1,79 @@
+<?php
+$translate = $this->plugin('translate');
+$escape = $this->plugin('escapeHtml');
+$previewKeys = is_array($packagedPreviewKeys ?? null) ? $packagedPreviewKeys : [];
+$total = count($previewKeys);
+if ($total === 0) {
+    return;
+}
+$galleryIndex = [];
+foreach ($previewKeys as $fileKey) {
+    $fileKey = (string) $fileKey;
+    $thumbSrc = $this->dipFileUrl($itemId, $mediaId, $fileKey, 'thumb', $siteSlug ?? null);
+    $fullSrc = $this->dipFileUrl($itemId, $mediaId, $fileKey, null, $siteSlug ?? null);
+    $galleryIndex[] = [
+        'key' => $fileKey,
+        'src' => $thumbSrc,
+        'fullSrc' => $fullSrc,
+        'label' => $fileKey === 'menu' ? $translate('DVD menu') : $fileKey,
+    ];
+}
+$galleryIndexJson = json_encode(
+    $galleryIndex,
+    JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+);
+?>
+<section class="omeka-dip-gallery omeka-dip-packaged-previews" aria-label="<?= $escape($translate('Package preview')) ?>">
+    <script type="application/json" class="omeka-dip-gallery-index"><?= $galleryIndexJson ?></script>
+    <h4><?= $escape($translate('Preview')) ?></h4>
+    <p class="omeka-dip-gallery-note">
+        <?= $escape($translate('Packaged preview from the preservation copy. Disc images and other dump payload files are not published here.')) ?>
+    </p>
+    <div class="omeka-dip-embla">
+        <div class="omeka-dip-embla__viewport">
+            <div class="omeka-dip-embla__container">
+                <?php foreach ($previewKeys as $fileKey): ?>
+                <?php
+                $fileKey = (string) $fileKey;
+                $thumbHref = $this->dipFileUrl($itemId, $mediaId, $fileKey, 'thumb', $siteSlug ?? null);
+                $fullHref = $this->dipFileUrl($itemId, $mediaId, $fileKey, null, $siteSlug ?? null);
+                $label = $fileKey === 'menu' ? $translate('DVD menu') : $fileKey;
+                ?>
+                <div class="omeka-dip-embla__slide omeka-dip-gallery-item">
+                    <button
+                        type="button"
+                        class="omeka-dip-gallery-open"
+                        data-dip-file-key="<?= $escape($fileKey) ?>"
+                        data-dip-full-src="<?= $escape($fullHref) ?>"
+                        aria-label="<?= $escape($label) ?>"
+                    >
+                        <img
+                            src="<?= $escape($thumbHref) ?>"
+                            alt="<?= $escape($label) ?>"
+                            class="omeka-dip-gallery-thumb"
+                            loading="lazy"
+                        >
+                    </button>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <?php if ($total > 1): ?>
+        <div class="omeka-dip-embla__controls">
+            <button type="button" class="omeka-dip-embla__prev button secondary" aria-label="<?= $escape($translate('Previous')) ?>">‹</button>
+            <button type="button" class="omeka-dip-embla__next button secondary" aria-label="<?= $escape($translate('Next')) ?>">›</button>
+        </div>
+        <?php endif; ?>
+    </div>
+    <dialog class="omeka-dip-gallery-dialog" aria-label="<?= $escape($translate('Enlarged image')) ?>">
+        <form method="dialog">
+            <button type="submit" class="omeka-dip-gallery-close" aria-label="<?= $escape($translate('Close')) ?>">×</button>
+        </form>
+        <button type="button" class="omeka-dip-gallery-lightbox-prev" data-dip-lightbox-nav="-1" aria-label="<?= $escape($translate('Previous image')) ?>">‹</button>
+        <button type="button" class="omeka-dip-gallery-lightbox-next" data-dip-lightbox-nav="1" aria-label="<?= $escape($translate('Next image')) ?>">›</button>
+        <figure class="omeka-dip-gallery-dialog-body">
+            <img src="" alt="" class="omeka-dip-gallery-full" draggable="false">
+            <figcaption class="omeka-dip-gallery-caption"></figcaption>
+        </figure>
+    </dialog>
+</section>

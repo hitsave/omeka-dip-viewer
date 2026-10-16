@@ -2,6 +2,7 @@
 namespace OmekaDipViewer\Controller;
 
 use OmekaDipViewer\Media\DipPackageMedia;
+use OmekaDipViewer\Service\DipCatalogPolicy;
 use OmekaDipViewer\Service\DipIndexService;
 use OmekaDipViewer\Service\DipPreviewCache;
 use OmekaDipViewer\Service\DipS3ObjectStore;
@@ -110,6 +111,9 @@ class DipFileController extends AbstractActionController
             return $this->getResponse()->setStatusCode(500);
         }
 
+        /** @var DipCatalogPolicy $catalogPolicy */
+        $catalogPolicy = $services->get(DipCatalogPolicy::class);
+
         if ($variant === 'thumb') {
             return $this->streamPackagedThumbnail(
                 $media,
@@ -118,6 +122,25 @@ class DipFileController extends AbstractActionController
                 $s3Location['bucket'],
                 $s3Location['prefix'],
                 $indexService,
+                $services
+            );
+        }
+
+        if ($catalogPolicy->isPreservationDump($media)) {
+            $manifest = $indexService->getPreviewManifest($media);
+            $previewInner = $catalogPolicy->resolveManifestPreviewInnerPath($manifest, $fileKey, $variant);
+            if ($previewInner === null) {
+                return $this->getResponse()->setStatusCode(404);
+            }
+            $mime = str_ends_with(strtolower($previewInner), '.png') ? 'image/png' : 'image/jpeg';
+            $label = $fileKey === 'menu' ? 'DVD menu' : $fileKey;
+
+            return $this->sendS3ObjectResponse(
+                $s3Location['bucket'],
+                $s3Location['prefix'],
+                $previewInner,
+                $mime,
+                $label,
                 $services
             );
         }

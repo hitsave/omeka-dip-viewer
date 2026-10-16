@@ -2,6 +2,7 @@
 namespace OmekaDipViewer\Service\Media\Renderer;
 
 use OmekaDipViewer\Media\Renderer\DipPackage;
+use OmekaDipViewer\Service\DipCatalogPolicy;
 use OmekaDipViewer\Service\DipConfig;
 use OmekaDipViewer\Service\DipGalleryFilter;
 use OmekaDipViewer\Service\DipVideoFilter;
@@ -17,7 +18,8 @@ class DipPackageFactory implements FactoryInterface
             $services->get(DipIndexService::class),
             $services->get(DipConfig::class),
             $services->get(DipGalleryFilter::class),
-            $services->get(DipVideoFilter::class)
+            $services->get(DipVideoFilter::class),
+            $services->get(DipCatalogPolicy::class)
         );
     }
 }

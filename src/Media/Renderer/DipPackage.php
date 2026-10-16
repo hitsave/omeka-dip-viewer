@@ -1,6 +1,7 @@
 <?php
 namespace OmekaDipViewer\Media\Renderer;
 
+use OmekaDipViewer\Service\DipCatalogPolicy;
 use OmekaDipViewer\Service\DipConfig;
 use OmekaDipViewer\Service\DipGalleryFilter;
 use OmekaDipViewer\Service\DipVideoFilter;
@@ -15,17 +16,20 @@ class DipPackage implements RendererInterface
     protected DipConfig $dipConfig;
     protected DipGalleryFilter $galleryFilter;
     protected DipVideoFilter $videoFilter;
+    protected DipCatalogPolicy $catalogPolicy;
 
     public function __construct(
         DipIndexService $dipIndexService,
         DipConfig $dipConfig,
         DipGalleryFilter $galleryFilter,
-        DipVideoFilter $videoFilter
+        DipVideoFilter $videoFilter,
+        DipCatalogPolicy $catalogPolicy
     ) {
         $this->dipIndexService = $dipIndexService;
         $this->dipConfig = $dipConfig;
         $this->galleryFilter = $galleryFilter;
         $this->videoFilter = $videoFilter;
+        $this->catalogPolicy = $catalogPolicy;
     }
 
     public function render(PhpRenderer $view, MediaRepresentation $media, array $options = [])
@@ -43,23 +47,34 @@ class DipPackage implements RendererInterface
             return '<p class="omeka-dip-error">' . $view->escapeHtml($view->translate('Could not read DIP package index from stored archive.')) . '</p>';
         }
 
-        $galleryFiles = $this->galleryFilter->filterGalleryFiles(
-            $index['files'] ?? [],
-            $this->dipConfig->getGalleryMaxBytes(),
-            $this->dipConfig->getGalleryMimeTypes()
-        );
-        $galleryMaxDisplay = $this->dipConfig->getGalleryMaxDisplay();
+        $previewManifest = $this->dipIndexService->getPreviewManifest($media);
+        $preservationDump = $this->catalogPolicy->isPreservationDump($media);
+
+        $galleryFiles = [];
         $videoFiles = [];
-        if ($this->dipConfig->isVideoPlayerEnabled()) {
-            $videoFiles = $this->videoFilter->filterPlaybackFiles($index['files'] ?? []);
+        $packagedPreviewKeys = [];
+        if ($preservationDump) {
+            $packagedPreviewKeys = $this->catalogPolicy->packagedPreviewFileKeys($previewManifest);
+        } else {
+            $galleryFiles = $this->galleryFilter->filterGalleryFiles(
+                $index['files'] ?? [],
+                $this->dipConfig->getGalleryMaxBytes(),
+                $this->dipConfig->getGalleryMimeTypes()
+            );
+            if ($this->dipConfig->isVideoPlayerEnabled()) {
+                $videoFiles = $this->videoFilter->filterPlaybackFiles($index['files'] ?? []);
+            }
         }
+        $galleryMaxDisplay = $this->dipConfig->getGalleryMaxDisplay();
 
         return $view->partial('omeka-dip-viewer/media-render', [
             'media' => $media,
             'index' => $index,
-            'previewManifest' => $this->dipIndexService->getPreviewManifest($media),
+            'previewManifest' => $previewManifest,
             'galleryFiles' => $galleryFiles,
             'videoFiles' => $videoFiles,
+            'packagedPreviewKeys' => $packagedPreviewKeys,
+            'showPackageContents' => !$preservationDump,
             'galleryMaxDisplay' => $galleryMaxDisplay,
             'galleryMaxBytes' => $this->dipConfig->getGalleryMaxBytes(),
             'largePackage' => !empty($data['large_package']),
