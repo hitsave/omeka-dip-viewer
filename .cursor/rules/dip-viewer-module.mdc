@@ -1,0 +1,22 @@
+---
+description: OmekaDipViewer module — PHP/Omeka S, Wasabi S3 config, no vendor edits
+globs: asset/**,config/**,src/**,view/**,Module.php,composer.json
+alwaysApply: false
+---
+
+# Omeka DIP Viewer
+
+Omeka S **module** for BagIt-on-Wasabi browsing. Bound into **hitsave-omeka-test** for QA; production uses Omeka admin + **`config/dip-s3.config.php`** (from `.dist`).
+
+## Do
+
+- Module-only changes: redeploy/recreate Omeka container in **hitsave-omeka-test** — **no Omeka image rebuild** required (bind mount).
+- Local PHP checks: **`composer install`** in repo; **`php test/parse_fixture.php`** with a fixture bag (see README).
+- Media registration contract: ingester **`omeka_dip_package`**, fields documented in README — align with **hitsave-archiver** register scripts.
+
+## Do not
+
+- Edit **`vendor/`** — dependency updates via **`composer.json`** / lockfile.
+- Store Wasabi keys in git; use dist templates and private config on the Omeka host.
+
+Config SSOT for test stack: Omeka admin + **hitsave-omeka-test** `docs/config-contract.md` (DIP tuning is admin-side).
