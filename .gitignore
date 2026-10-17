@@ -1,4 +1,6 @@
 config/dip-s3.config.php
-.cursor/
+.cursor/*
+!.cursor/rules/
+!.cursor/rules/**
 *.swp
 *~
