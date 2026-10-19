@@ -13,7 +13,11 @@
         return;
     }
 
-    var contents = stack.querySelector('.full-width-main .omeka-dip-package__contents');
+    // Intended: mediaList in theme full_width_main. Prod may still embed media in .media-embeds inside main.
+    var contents =
+        stack.querySelector('.full-width-main .omeka-dip-package__contents') ||
+        stack.querySelector('.media-embeds .omeka-dip-package__contents') ||
+        stack.querySelector('.main-with-sidebar .omeka-dip-package__contents');
     var grid = stack.querySelector('.grid-x');
     var main = stack.querySelector('.main-with-sidebar');
     if (!contents || !grid || !main) {
