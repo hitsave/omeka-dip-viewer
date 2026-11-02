@@ -143,8 +143,46 @@ class DipPackage implements MutableIngesterInterface
         }
         $data['package_storage_prefix'] = $prefix;
         $data['original_filename'] = basename($prefix);
+        $locationKeys = ['package_storage_prefix', 'dip_wasabi_uri', 'package_wasabi_uri'];
+        $before = $media->getData();
+        $before = is_array($before) ? $before : [];
+        $moved = false;
+        foreach ($locationKeys as $key) {
+            if (trim((string) ($before[$key] ?? ''), '/') !== trim((string) ($data[$key] ?? ''), '/')) {
+                $moved = true;
+            }
+        }
         $media->setData($data);
         $media->setSource(basename($prefix));
+        if ($moved) {
+            // Previews are cached per media id and inner path, not per location: drop them so the
+            // viewer rebuilds from the new location. (The index cache is keyed by location already.)
+            $this->clearPreviewCache((int) $media->getId());
+        }
+    }
+
+    protected function clearPreviewCache(int $mediaId): void
+    {
+        $base = rtrim($this->dipConfig->getPreviewCacheDirectory(), '/');
+        if ($mediaId <= 0 || $base === '') {
+            return;
+        }
+        $dir = $base . '/' . $mediaId;
+        if (!is_dir($dir) || is_link($dir)) {
+            return;
+        }
+        $entries = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST
+        );
+        foreach ($entries as $entry) {
+            if ($entry->isDir() && !$entry->isLink()) {
+                @rmdir($entry->getPathname());
+            } else {
+                @unlink($entry->getPathname());
+            }
+        }
+        @rmdir($dir);
     }
 
     public function updateForm(\Laminas\View\Renderer\PhpRenderer $view, MediaRepresentation $media, array $options = [])
