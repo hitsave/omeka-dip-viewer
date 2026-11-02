@@ -16,9 +16,18 @@ POST `/api/media` with ingester `omeka_dip_package` and JSON `data`:
 
 - `dip_storage`: `wasabi-s3`
 - `package_storage_prefix`: e.g. `press-material/F/{package_id}`
-- `dip_wasabi_uri`: `s3://hitsave-incoming/press-material/F/{package_id}/`
+- `dip_wasabi_uri`: `s3://hitsave-press-material/press-material/F/{package_id}/`
 
 No file upload. Ingest + `register-dip-omeka-api.py` set these fields automatically.
+
+### Moving a package (0.5.9+)
+
+PATCH `/api/media/{id}` with a `data` object to change where the package lives, for example after
+moving the bag to a new Wasabi prefix. Only these keys are taken from the request; the rest of the
+media data is kept: `package_storage_prefix`, `dip_storage`, `dip_size_bytes`, `dip_wasabi_uri`,
+`package_wasabi_uri`, `dip_sha256`, `package_uuid`. A PATCH without `data` (e.g. a visibility change)
+leaves data untouched; an empty or `..` prefix is rejected (HTTP 422). The media id, and therefore
+every file and ARK URL, stays the same.
 
 ## Local dev
 
