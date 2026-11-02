@@ -3,14 +3,26 @@ namespace OmekaDipViewer\Media\Ingester;
 
 use OmekaDipViewer\Media\DipPackageMedia;
 use OmekaDipViewer\Service\DipConfig;
+use Omeka\Api\Representation\MediaRepresentation;
 use Omeka\Api\Request;
 use Omeka\Entity\Media;
-use Omeka\Media\Ingester\IngesterInterface;
+use Omeka\Media\Ingester\MutableIngesterInterface;
 use Omeka\Stdlib\ErrorStore;
 use Omeka\File\TempFileFactory;
 
-class DipPackage implements IngesterInterface
+class DipPackage implements MutableIngesterInterface
 {
+    /** Location fields an update may change (via the API, e.g. after a Wasabi prefix move). */
+    protected const UPDATABLE_KEYS = [
+        'package_storage_prefix',
+        'dip_storage',
+        'dip_size_bytes',
+        'dip_wasabi_uri',
+        'package_wasabi_uri',
+        'dip_sha256',
+        'package_uuid',
+    ];
+
     protected TempFileFactory $tempFileFactory;
     protected DipConfig $dipConfig;
 
@@ -91,6 +103,61 @@ class DipPackage implements IngesterInterface
         $media->setSource(basename(rtrim($prefix, '/')));
 
         return true;
+    }
+
+    /**
+     * Update the package location in media data.
+     *
+     * Only runs when the request carries a `data` object (API PATCH/PUT); admin edits of other
+     * fields (title, visibility) don't send one and leave data untouched. Only the location keys in
+     * UPDATABLE_KEYS are taken from the request; everything else in data is kept.
+     */
+    public function update(Media $media, Request $request, ErrorStore $errorStore): void
+    {
+        $content = $request->getContent();
+        $incoming = (is_array($content) && isset($content['data']) && is_array($content['data']))
+            ? $content['data'] : null;
+        if ($incoming === null) {
+            return;
+        }
+        $data = $media->getData();
+        $data = is_array($data) ? $data : [];
+        $changed = false;
+        foreach (self::UPDATABLE_KEYS as $key) {
+            if (!array_key_exists($key, $incoming)) {
+                continue;
+            }
+            $value = $key === 'dip_size_bytes' ? (int) $incoming[$key] : trim((string) $incoming[$key]);
+            if (($data[$key] ?? null) !== $value) {
+                $data[$key] = $value;
+                $changed = true;
+            }
+        }
+        if (!$changed) {
+            return;
+        }
+        $prefix = trim((string) ($data['package_storage_prefix'] ?? ''), '/');
+        if ($prefix === '' || strpos($prefix, '..') !== false) {
+            $errorStore->addError('data', 'package_storage_prefix must be a non-empty bucket key prefix.');
+            return;
+        }
+        $data['package_storage_prefix'] = $prefix;
+        $data['original_filename'] = basename($prefix);
+        $media->setData($data);
+        $media->setSource(basename($prefix));
+    }
+
+    public function updateForm(\Laminas\View\Renderer\PhpRenderer $view, MediaRepresentation $media, array $options = [])
+    {
+        $data = $media->mediaData();
+        $prefix = is_array($data) ? (string) ($data['package_storage_prefix'] ?? '') : '';
+        return '
+        <div class="field">
+            <div class="field-meta">
+                <label>' . $view->translate('Package location (change via the API)') . '</label>
+            </div>
+            <div class="inputs"><code>' . $view->escapeHtml($prefix) . '</code></div>
+        </div>';
     }
 
     /**
