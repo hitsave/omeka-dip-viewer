@@ -30,6 +30,7 @@ $siteSlug = $siteSlug ?? null;
     <?= $this->partial('omeka-dip-viewer/partials/packaged-previews', [
         'packagedPreviewKeys' => $packagedPreviewKeys,
         'packagedPreviewLabels' => $packagedPreviewLabels ?? [],
+        'duplicateOriginals' => $duplicateOriginals ?? [],
         'mediaId' => $mediaId,
         'itemId' => $itemId,
         'siteSlug' => $siteSlug,

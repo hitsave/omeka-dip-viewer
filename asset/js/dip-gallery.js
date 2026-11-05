@@ -589,10 +589,16 @@
         if (!container || !indexEl) {
             return;
         }
-        var entries = collectNativeMediaEmbedEntries(embeds);
-        if (!entries.length) {
-            return;
+        var duplicates = [];
+        try {
+            duplicates = JSON.parse(dip.getAttribute('data-dip-duplicate-originals') || '[]');
+        } catch (e) {
+            duplicates = [];
         }
+        // Byte-identical to a file already in the package gallery (server-side SHA-256 match): skip.
+        var entries = collectNativeMediaEmbedEntries(embeds).filter(function (entry) {
+            return duplicates.indexOf(entry.downloadHref) === -1;
+        });
         var index;
         try {
             index = JSON.parse(indexEl.textContent || '[]');
@@ -605,7 +611,9 @@
             container.appendChild(makeGallerySlide(entry));
         });
         indexEl.textContent = JSON.stringify(index);
-        dip.classList.remove('omeka-dip-gallery--count-1');
+        if (index.length > 1) {
+            dip.classList.remove('omeka-dip-gallery--count-1');
+        }
         embeds.querySelectorAll('.media-render.file').forEach(function (render) {
             render.remove();
         });
