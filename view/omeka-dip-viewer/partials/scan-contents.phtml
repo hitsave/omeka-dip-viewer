@@ -1,0 +1,33 @@
+<?php
+/**
+ * Right-column listing of a dump's scans (box, manual, cart…), like the press-material package
+ * contents but limited to scans: links serve the scan files themselves, never game data.
+ *
+ * @var list<array{key: string, path: string, label: string, folder: string, size: int}> $scanFiles
+ */
+$translate = $this->plugin('translate');
+$escape = $this->plugin('escapeHtml');
+$formatSize = static function (int $bytes): string {
+    if ($bytes >= 1048576) {
+        return number_format($bytes / 1048576, 1) . ' MB';
+    }
+    if ($bytes >= 1024) {
+        return number_format($bytes / 1024, 0) . ' KB';
+    }
+    return number_format($bytes) . ' B';
+};
+?>
+<aside class="omeka-dip-package__contents omeka-dip-scan-contents" aria-label="<?= $escape($translate('Scans')) ?>">
+    <h4><?= $escape($translate('Scans')) ?></h4>
+    <ul class="omeka-dip-file-list">
+        <?php foreach ($scanFiles as $scan): ?>
+        <?php $href = $this->dipFileUrl($itemId, $mediaId, $scan['key'], 'scan', $siteSlug ?? null); ?>
+        <li class="omeka-dip-file">
+            <a href="<?= $escape($href) ?>"><?= $escape($scan['label']) ?></a>
+            <?php if ($scan['size'] > 0): ?>
+            <span class="omeka-dip-size">(<?= $escape($formatSize($scan['size'])) ?>)</span>
+            <?php endif; ?>
+        </li>
+        <?php endforeach; ?>
+    </ul>
+</aside>

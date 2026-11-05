@@ -128,6 +128,22 @@ class DipFileController extends AbstractActionController
 
         if ($catalogPolicy->isPreservationDump($media)) {
             $manifest = $indexService->getPreviewManifest($media);
+            if ($variant === 'scan') {
+                // Listed scans are the only dump payload served; game data never is.
+                $scanInner = $catalogPolicy->resolveScanPayloadInnerPath($manifest, $fileKey);
+                if ($scanInner === null) {
+                    return $this->getResponse()->setStatusCode(404);
+                }
+
+                return $this->sendS3ObjectResponse(
+                    $s3Location['bucket'],
+                    $s3Location['prefix'],
+                    $scanInner,
+                    $this->scanMime($scanInner),
+                    $catalogPolicy->galleryLabel($manifest, $fileKey),
+                    $services
+                );
+            }
             $previewInner = $catalogPolicy->resolveManifestPreviewInnerPath($manifest, $fileKey, $variant);
             if ($previewInner === null) {
                 return $this->getResponse()->setStatusCode(404);
@@ -177,6 +193,18 @@ class DipFileController extends AbstractActionController
             $label,
             $services
         );
+    }
+
+    protected function scanMime(string $innerPath): string
+    {
+        return match (strtolower(pathinfo($innerPath, PATHINFO_EXTENSION))) {
+            'png' => 'image/png',
+            'jpg', 'jpeg' => 'image/jpeg',
+            'gif' => 'image/gif',
+            'webp' => 'image/webp',
+            'tif', 'tiff' => 'image/tiff',
+            default => 'application/octet-stream',
+        };
     }
 
     protected function sendS3ObjectResponse(

@@ -2,6 +2,7 @@
 $translate = $this->plugin('translate');
 $escape = $this->plugin('escapeHtml');
 $previewKeys = is_array($packagedPreviewKeys ?? null) ? $packagedPreviewKeys : [];
+$previewLabels = is_array($packagedPreviewLabels ?? null) ? $packagedPreviewLabels : [];
 $total = count($previewKeys);
 if ($total === 0) {
     return;
@@ -10,8 +11,8 @@ $galleryIndex = [];
 foreach ($previewKeys as $fileKey) {
     $fileKey = (string) $fileKey;
     $thumbHref = $this->dipFileUrl($itemId, $mediaId, $fileKey, 'thumb', $siteSlug ?? null);
-    $fullHref = $this->dipFileUrl($itemId, $mediaId, $fileKey, null, $siteSlug ?? null);
-    $label = $fileKey === 'menu' ? (string) $translate('DVD menu') : $fileKey;
+    $fullHref = $this->dipFileUrl($itemId, $mediaId, $fileKey, 'display', $siteSlug ?? null);
+    $label = $fileKey === 'menu' ? (string) $translate('DVD menu') : (string) ($previewLabels[$fileKey] ?? $fileKey);
     $galleryIndex[] = [
         'key' => $fileKey,
         'src' => $thumbHref,
@@ -35,8 +36,8 @@ $countClass = $total === 1 ? ' omeka-dip-gallery--count-1' : '';
                 <?php
                 $fileKey = (string) $fileKey;
                 $thumbHref = $this->dipFileUrl($itemId, $mediaId, $fileKey, 'thumb', $siteSlug ?? null);
-                $fullHref = $this->dipFileUrl($itemId, $mediaId, $fileKey, null, $siteSlug ?? null);
-                $label = $fileKey === 'menu' ? (string) $translate('DVD menu') : $fileKey;
+                $fullHref = $this->dipFileUrl($itemId, $mediaId, $fileKey, 'display', $siteSlug ?? null);
+                $label = $fileKey === 'menu' ? (string) $translate('DVD menu') : (string) ($previewLabels[$fileKey] ?? $fileKey);
                 ?>
                 <div class="omeka-dip-embla__slide omeka-dip-gallery-item">
                     <div

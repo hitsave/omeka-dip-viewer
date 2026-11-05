@@ -29,6 +29,7 @@ $siteSlug = $siteSlug ?? null;
 <?php if (!empty($packagedPreviewKeys)): ?>
     <?= $this->partial('omeka-dip-viewer/partials/packaged-previews', [
         'packagedPreviewKeys' => $packagedPreviewKeys,
+        'packagedPreviewLabels' => $packagedPreviewLabels ?? [],
         'mediaId' => $mediaId,
         'itemId' => $itemId,
         'siteSlug' => $siteSlug,
@@ -44,6 +45,14 @@ $siteSlug = $siteSlug ?? null;
         </p>
 <?php endif; ?>
     </div>
+<?php if (!empty($scanFiles)): ?>
+    <?= $this->partial('omeka-dip-viewer/partials/scan-contents', [
+        'scanFiles' => $scanFiles,
+        'mediaId' => $mediaId,
+        'itemId' => $itemId,
+        'siteSlug' => $siteSlug,
+    ]) ?>
+<?php endif; ?>
 <?php if (!empty($showPackageContents)): ?>
     <?= $this->partial('omeka-dip-viewer/partials/package-contents', [
         'media' => $media,

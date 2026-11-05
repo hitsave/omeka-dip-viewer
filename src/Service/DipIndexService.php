@@ -55,7 +55,8 @@ class DipIndexService
         $index = $this->buildIndexFromS3Prefix(
             $mediaId,
             (string) $located['bucket'],
-            (string) $located['prefix']
+            (string) $located['prefix'],
+            $this->previewsVersion($media)
         );
         $this->requestCache[$mediaId] = $index;
 
@@ -96,7 +97,8 @@ class DipIndexService
             $manifest = $this->readPreviewManifestFromS3(
                 $mediaId,
                 (string) $located['bucket'],
-                (string) $located['prefix']
+                (string) $located['prefix'],
+                $this->previewsVersion($media)
             );
             $this->manifestRequestCache[$mediaId] = is_array($manifest) ? $manifest : false;
 
@@ -175,9 +177,9 @@ class DipIndexService
     /**
      * @return array{bagit_anchor_relpath: string, package_uuid: ?string, files: array, tree: array}|null
      */
-    protected function buildIndexFromS3Prefix(int $mediaId, string $bucket, string $prefix): ?array
+    protected function buildIndexFromS3Prefix(int $mediaId, string $bucket, string $prefix, string $previewsVersion = ''): ?array
     {
-        $identity = 's3:' . $bucket . '/' . $prefix;
+        $identity = $this->cacheIdentity($bucket, $prefix, $previewsVersion);
         $cacheFile = $this->cacheFilePathForIdentity($mediaId, $identity);
         $apcuKey = $this->apcuCacheKey($mediaId, $identity);
         if ($cacheFile !== null) {
@@ -205,7 +207,7 @@ class DipIndexService
             if (!is_array($inventory)) {
                 throw new \RuntimeException('Invalid inventory.json on S3.');
             }
-            $preview = $this->readPreviewManifestFromS3($mediaId, $bucket, $prefix);
+            $preview = $this->readPreviewManifestFromS3($mediaId, $bucket, $prefix, $previewsVersion);
             $packageUuid = null;
             try {
                 $subRaw = $this->s3->getObject($prefix, 'metadata/submission.json', $bucket);
@@ -232,9 +234,9 @@ class DipIndexService
     /**
      * @return array<string, mixed>|null
      */
-    protected function readPreviewManifestFromS3(int $mediaId, string $bucket, string $prefix): ?array
+    protected function readPreviewManifestFromS3(int $mediaId, string $bucket, string $prefix, string $previewsVersion = ''): ?array
     {
-        $identity = 's3:' . $bucket . '/' . $prefix;
+        $identity = $this->cacheIdentity($bucket, $prefix, $previewsVersion);
         $manifestCacheFile = $this->manifestCacheFilePathForIdentity($mediaId, $identity);
         if ($manifestCacheFile !== null) {
             $cached = $this->readManifestCacheFile($manifestCacheFile);
@@ -298,6 +300,25 @@ class DipIndexService
             return;
         }
         file_put_contents($path, $json, LOCK_EX);
+    }
+
+    /**
+     * Cache identity: package location, plus media data previews_version when set. Rebuilding a
+     * bag's previews in place (same location) sets a new previews_version so cached indexes and
+     * manifests from before the rebuild stop matching.
+     */
+    protected function cacheIdentity(string $bucket, string $prefix, string $previewsVersion): string
+    {
+        $identity = 's3:' . $bucket . '/' . $prefix;
+
+        return $previewsVersion === '' ? $identity : $identity . '#previews=' . $previewsVersion;
+    }
+
+    protected function previewsVersion(MediaRepresentation $media): string
+    {
+        $data = $media->mediaData();
+
+        return is_array($data) ? trim((string) ($data['previews_version'] ?? '')) : '';
     }
 
     protected function cacheFilePathForIdentity(int $mediaId, string $identity): ?string

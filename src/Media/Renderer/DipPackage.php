@@ -62,8 +62,14 @@ class DipPackage implements RendererInterface
         $galleryFiles = [];
         $videoFiles = [];
         $packagedPreviewKeys = [];
+        $packagedPreviewLabels = [];
+        $scanFiles = [];
         if ($preservationDump) {
             $packagedPreviewKeys = $this->catalogPolicy->packagedPreviewFileKeys($previewManifest);
+            foreach ($packagedPreviewKeys as $key) {
+                $packagedPreviewLabels[$key] = $this->catalogPolicy->galleryLabel($previewManifest, (string) $key);
+            }
+            $scanFiles = $this->catalogPolicy->scanFiles($previewManifest);
         } else {
             $galleryFiles = $this->galleryFilter->filterGalleryFiles(
                 $index['files'] ?? [],
@@ -83,6 +89,8 @@ class DipPackage implements RendererInterface
             'galleryFiles' => $galleryFiles,
             'videoFiles' => $videoFiles,
             'packagedPreviewKeys' => $packagedPreviewKeys,
+            'packagedPreviewLabels' => $packagedPreviewLabels,
+            'scanFiles' => $scanFiles,
             'showPackageContents' => !$preservationDump,
             'galleryMaxDisplay' => $galleryMaxDisplay,
             'galleryMaxBytes' => $this->dipConfig->getGalleryMaxBytes(),

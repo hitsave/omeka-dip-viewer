@@ -21,6 +21,9 @@ class DipPackage implements MutableIngesterInterface
         'package_wasabi_uri',
         'dip_sha256',
         'package_uuid',
+        // Set when a bag's previews are rebuilt in place (archiver refresh_bag_previews_wasabi.py):
+        // part of the index cache identity, so stale indexes/manifests stop matching.
+        'previews_version',
     ];
 
     protected TempFileFactory $tempFileFactory;
@@ -151,6 +154,10 @@ class DipPackage implements MutableIngesterInterface
             if (trim((string) ($before[$key] ?? ''), '/') !== trim((string) ($data[$key] ?? ''), '/')) {
                 $moved = true;
             }
+        }
+        // Rebuilt previews at the same location: cached collages/thumbs are stale too.
+        if ((string) ($before['previews_version'] ?? '') !== (string) ($data['previews_version'] ?? '')) {
+            $moved = true;
         }
         $media->setData($data);
         $media->setSource(basename($prefix));
