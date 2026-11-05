@@ -26,7 +26,8 @@ $galleryIndexJson = json_encode(
 );
 $countClass = $total === 1 ? ' omeka-dip-gallery--count-1' : '';
 ?>
-<section class="omeka-dip-gallery omeka-dip-packaged-previews<?= $countClass ?>" aria-label="<?= $escape($translate('Package preview')) ?>">
+<?php $duplicateOriginals = is_array($duplicateOriginals ?? null) ? array_values($duplicateOriginals) : []; ?>
+<section class="omeka-dip-gallery omeka-dip-packaged-previews<?= $countClass ?>" aria-label="<?= $escape($translate('Package preview')) ?>"<?php if ($duplicateOriginals): ?> data-dip-duplicate-originals="<?= $escape(json_encode($duplicateOriginals, JSON_UNESCAPED_SLASHES)) ?>"<?php endif; ?>>
     <script type="application/json" class="omeka-dip-gallery-index"><?= $galleryIndexJson ?></script>
     <h4><?= $escape($translate('Preview')) ?></h4>
     <div class="omeka-dip-embla">

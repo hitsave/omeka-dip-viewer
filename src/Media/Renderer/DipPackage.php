@@ -35,6 +35,52 @@ class DipPackage implements RendererInterface
         $this->catalogPolicy = $catalogPolicy;
     }
 
+    /**
+     * Original URLs of the item's other (file) media that are byte-identical (SHA-256) to a file
+     * shown in this package's gallery, e.g. catalogue disc photos that are also scans in the bag.
+     * The gallery script leaves those out when it folds file media into the package gallery.
+     * Only reads the bag manifest when the item actually has file media.
+     *
+     * @param array<string, mixed> $index
+     * @param list<string> $galleryKeys
+     * @return list<string>
+     */
+    protected function duplicateFileMediaOriginals(MediaRepresentation $media, array $index, array $galleryKeys): array
+    {
+        $fileMedia = [];
+        foreach ($media->item()->media() as $other) {
+            if ((int) $other->id() === (int) $media->id() || !$other->hasOriginal() || !$other->sha256()) {
+                continue;
+            }
+            $fileMedia[] = $other;
+        }
+        if (!$fileMedia || !$galleryKeys) {
+            return [];
+        }
+        $pathByKey = [];
+        foreach ($index['files'] ?? [] as $file) {
+            if (isset($file['key'], $file['inner_path'])) {
+                $pathByKey[(string) $file['key']] = (string) $file['inner_path'];
+            }
+        }
+        $shaByPath = $this->dipIndexService->payloadSha256($media);
+        $gallerySha = [];
+        foreach ($galleryKeys as $key) {
+            $path = $pathByKey[(string) $key] ?? null;
+            if ($path !== null && isset($shaByPath[$path])) {
+                $gallerySha[$shaByPath[$path]] = true;
+            }
+        }
+        $out = [];
+        foreach ($fileMedia as $other) {
+            if (isset($gallerySha[strtolower((string) $other->sha256())])) {
+                $out[] = (string) $other->originalUrl();
+            }
+        }
+
+        return $out;
+    }
+
     public function render(PhpRenderer $view, MediaRepresentation $media, array $options = [])
     {
         $mediaId = (int) $media->id();
@@ -70,6 +116,7 @@ class DipPackage implements RendererInterface
                 $packagedPreviewLabels[$key] = $this->catalogPolicy->galleryLabel($previewManifest, (string) $key);
             }
             $scanFiles = $this->catalogPolicy->scanFiles($previewManifest);
+            $duplicateOriginals = $this->duplicateFileMediaOriginals($media, $index, $packagedPreviewKeys);
         } else {
             $galleryFiles = $this->galleryFilter->filterGalleryFiles(
                 $index['files'] ?? [],
@@ -91,6 +138,7 @@ class DipPackage implements RendererInterface
             'packagedPreviewKeys' => $packagedPreviewKeys,
             'packagedPreviewLabels' => $packagedPreviewLabels,
             'scanFiles' => $scanFiles,
+            'duplicateOriginals' => $duplicateOriginals ?? [],
             'showPackageContents' => !$preservationDump,
             'galleryMaxDisplay' => $galleryMaxDisplay,
             'galleryMaxBytes' => $this->dipConfig->getGalleryMaxBytes(),

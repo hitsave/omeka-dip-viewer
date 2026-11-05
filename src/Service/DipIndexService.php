@@ -156,6 +156,33 @@ class DipIndexService
     /**
      * @return array{bucket: string, prefix: string}|null
      */
+    /**
+     * Payload SHA-256 per bag inner path (data/...), from the bag's manifest-sha256.txt. Used to spot
+     * item file media that are byte-identical to files already in the package gallery.
+     *
+     * @return array<string, string> inner path => lowercase sha256 (empty when unavailable)
+     */
+    public function payloadSha256(MediaRepresentation $media): array
+    {
+        $location = $this->resolveS3Location($media);
+        if ($location === null) {
+            return [];
+        }
+        try {
+            $raw = $this->s3->getObject($location['prefix'], 'manifest-sha256.txt', $location['bucket']);
+        } catch (\Throwable $e) {
+            return [];
+        }
+        $out = [];
+        foreach (preg_split('/\r?\n/', $raw) as $line) {
+            if (preg_match('/^([0-9a-fA-F]{64})\s+(.+)$/', trim($line), $m)) {
+                $out[trim(str_replace('\\', '/', $m[2]))] = strtolower($m[1]);
+            }
+        }
+
+        return $out;
+    }
+
     public function resolveS3Location(MediaRepresentation $media): ?array
     {
         $located = $this->locator->locate($media);
