@@ -39,9 +39,8 @@ if ($total > 0) {
     <h4><?= $escape($translate('Images')) ?> <?= $total > 0 ? $escape('(' . number_format($total) . ')') : '' ?></h4>
     <p class="omeka-dip-gallery-note">
         <?= $escape(sprintf(
-            $translate('JPEG, PNG, GIF, and WebP under %s MB. Drag or scroll over the carousel (trackpad or wheel); click a slide to enlarge; in the enlarged view use arrow keys or swipe left/right (or the on-screen arrows) to step through all %s gallery images. Other files are listed under package contents.'),
-            $maxMb,
-            number_format($total)
+            $translate('JPEG, PNG, GIF and WebP images up to %s MB. Larger images and other formats are in the package contents.'),
+            $maxMb
         )) ?>
     </p>
     <div class="omeka-dip-embla">
