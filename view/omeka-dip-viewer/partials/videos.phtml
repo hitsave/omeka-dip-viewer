@@ -32,8 +32,18 @@ $sheetUrl = function (array $file) use ($view, $display, $itemId, $mediaId, $sit
         </div>
         <p class="omeka-dip-video-caption" aria-live="polite"></p>
         <p class="omeka-dip-video-sheet" hidden>
-            <a href="#" class="omeka-dip-video-sheet-link" target="_blank" rel="noopener"><?= $escape($translate('Contact sheet')) ?></a>
+            <a href="#" class="omeka-dip-video-sheet-link"><?= $escape($translate('Contact sheet')) ?></a>
         </p>
+        <?php /* Same lightbox look as the image gallery; opened by dip-videos.js. */ ?>
+        <dialog class="omeka-dip-gallery-dialog omeka-dip-video-sheet-dialog" aria-label="<?= $escape($translate('Contact sheet')) ?>">
+            <form method="dialog">
+                <button type="submit" class="omeka-dip-gallery-close" aria-label="<?= $escape($translate('Close')) ?>">×</button>
+            </form>
+            <figure class="omeka-dip-gallery-dialog-body">
+                <img src="" alt="" class="omeka-dip-gallery-full" draggable="false">
+                <figcaption class="omeka-dip-gallery-caption"></figcaption>
+            </figure>
+        </dialog>
         <p class="omeka-dip-video-download">
             <?= $escape($translate('Download original')) ?>:
             <a href="#" class="omeka-dip-video-download-link"></a>
