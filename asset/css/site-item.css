@@ -493,7 +493,20 @@ html[data-hitsave-theme="dark"] #content .omeka-dip-gallery-dialog .omeka-dip-ga
     overflow-wrap: anywhere;
 }
 
-/* Folder / "PDF copy": quieter than the file name (the theme resets .omeka-dip-size, so own class). */
+/* "PDF copy": a pill, so it doesn't read as part of the folder path. */
+#content .omeka-dip-documents .omeka-dip-document__pill {
+    justify-self: start;
+    font-size: 0.68rem;
+    font-weight: 600;
+    line-height: 1.4;
+    padding: 0 0.5em;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    color: var(--hs-content-fg, #333);
+    opacity: 0.85;
+}
+
+/* Folder: quieter than the file name (the theme resets .omeka-dip-size, so own class). */
 #content .omeka-dip-documents .omeka-dip-document__meta {
     font-size: 0.72rem;
     line-height: 1.3;

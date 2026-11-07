@@ -29,16 +29,13 @@ $total = count($documentFiles);
                         <span class="omeka-dip-document__thumb omeka-dip-document__thumb--icon" aria-hidden="true">PDF</span>
                     <?php endif; ?>
                     <span class="omeka-dip-document__label"><?= $escape($label) ?></span>
-                    <?php
-                    // Secondary line: where the file sits on the disc / in the package, and whether
-                    // the link opens a converted copy. Own class: the theme resets .omeka-dip-size.
-                    $meta = array_values(array_filter([
-                        ($folder !== '' && $folder !== '.') ? $folder : null,
-                        $isCopy ? (string) $translate('PDF copy') : null,
-                    ]));
-                    ?>
-                    <?php if ($meta): ?>
-                        <span class="omeka-dip-document__meta"><?= $escape(implode(' · ', $meta)) ?></span>
+                    <?php if ($isCopy): ?>
+                        <span class="omeka-dip-document__pill"
+                              title="<?= $escape($translate('Converted to PDF for viewing in the browser; the original is in the package contents.')) ?>"><?= $escape($translate('PDF copy')) ?></span>
+                    <?php endif; ?>
+                    <?php if ($folder !== '' && $folder !== '.'): ?>
+                        <?php /* Where the file sits in the package. Own class: the theme resets .omeka-dip-size. */ ?>
+                        <span class="omeka-dip-document__meta"><?= $escape($folder) ?></span>
                     <?php endif; ?>
                 </a>
             </li>
