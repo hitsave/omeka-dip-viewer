@@ -516,3 +516,69 @@ html[data-hitsave-theme="dark"] #content .omeka-dip-gallery-dialog .omeka-dip-ga
 .omeka-dip-file-nodownload {
     opacity: 0.8;
 }
+
+/* Package tree folders collapse like a file browser; the arrow replaces the list bullet. */
+#content li.omeka-dip-folder {
+    list-style: none;
+    margin-left: -1em;
+}
+
+.omeka-dip-folder-details > summary {
+    cursor: pointer;
+    list-style: none;
+}
+
+.omeka-dip-folder-details > summary::-webkit-details-marker {
+    display: none;
+}
+
+.omeka-dip-folder-details > summary::before {
+    content: "\25B8";
+    display: inline-block;
+    width: 1em;
+    transition: transform 0.15s ease;
+}
+
+.omeka-dip-folder-details[open] > summary::before {
+    transform: rotate(90deg);
+}
+
+#content .omeka-dip-folder-count {
+    font-size: 0.8em;
+    color: var(--hs-content-muted, #666);
+}
+
+#content .omeka-dip-folder-count::before {
+    content: "(";
+}
+
+#content .omeka-dip-folder-count::after {
+    content: ")";
+}
+
+.omeka-dip-tree-toggles {
+    display: flex;
+    gap: 0.5rem;
+    margin: 0 0 0.5rem;
+}
+
+#content .omeka-dip-tree-toggle {
+    font-size: 0.8rem;
+    padding: 0.15rem 0.6rem;
+    color: inherit;
+    background: transparent;
+    border: 1px solid var(--hs-content-muted, #888);
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#content .omeka-dip-tree-toggle:hover,
+#content .omeka-dip-tree-toggle:focus-visible {
+    border-color: currentColor;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .omeka-dip-folder-details > summary::before {
+        transition: none;
+    }
+}

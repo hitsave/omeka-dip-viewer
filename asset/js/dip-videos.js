@@ -1,6 +1,8 @@
 (function () {
     'use strict';
 
+    var DRAG_THRESHOLD_PX = 10;
+
     function formatBytes(bytes) {
         var n = parseInt(bytes, 10);
         if (!n || n < 0) {
@@ -158,6 +160,18 @@
             updateSheet(pick);
         }
 
+        function loadPick(pick) {
+            var src = pick ? pick.getAttribute('data-playback-src') : '';
+            if (!src) {
+                return false;
+            }
+            player.src({ src: src, type: pick.getAttribute('data-playback-type') || 'video/mp4' });
+            var poster = pick.getAttribute('data-poster-src') || '';
+            player.poster(poster);
+            root.dataset.dipVideoLoaded = src;
+            return true;
+        }
+
         function applyPick(pick) {
             if (!pick) {
                 return;
@@ -172,8 +186,10 @@
                 return;
             }
 
-            player.pause();
-            player.src({ src: src, type: type });
+            if (root.dataset.dipVideoLoaded !== src) {
+                player.pause();
+                loadPick(pick);
+            }
 
             if (caption) {
                 caption.textContent = label;
@@ -206,23 +222,38 @@
         }
 
         primeDownloadUi(selectedPick());
+        // Give the player the selected video up front (preload stays "none": nothing downloads
+        // until play), so its own play button works on the first press.
+        loadPick(selectedPick());
 
         picks.forEach(function (pick, index) {
+            // A click that moved less than DRAG_THRESHOLD_PX is a click, not a carousel drag.
+            var downX = null;
+            var downY = null;
             var pointerDragged = false;
-            pick.addEventListener('pointerdown', function () {
+            pick.addEventListener('pointerdown', function (event) {
+                downX = event.clientX;
+                downY = event.clientY;
                 pointerDragged = false;
             });
-            pick.addEventListener('pointermove', function () {
-                pointerDragged = true;
+            pick.addEventListener('pointermove', function (event) {
+                if (downX !== null && Math.hypot(event.clientX - downX, event.clientY - downY) >= DRAG_THRESHOLD_PX) {
+                    pointerDragged = true;
+                }
             });
             pick.addEventListener('click', function () {
                 if (pointerDragged) {
+                    pointerDragged = false;
                     return;
                 }
                 root.dataset.dipVideoStarted = '1';
                 applyPick(pick);
                 if (embla) {
                     embla.scrollTo(index);
+                }
+                var playing = player.play();
+                if (playing && typeof playing.catch === 'function') {
+                    playing.catch(function () { /* blocked or unsupported: the controls stay usable */ });
                 }
             });
             pick.addEventListener('keydown', function (event) {
@@ -234,11 +265,8 @@
             });
         });
 
-        player.ready(function () {
-            player.one('play', function () {
-                root.dataset.dipVideoStarted = '1';
-                applyPick(selectedPick());
-            });
+        player.on('play', function () {
+            root.dataset.dipVideoStarted = '1';
         });
     }
 
@@ -257,10 +285,6 @@
             var section = pick.closest('[data-omeka-dip-videos]');
             if (section) {
                 section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                var playerEl = section.querySelector('video-js');
-                if (playerEl && typeof window.videojs === 'function') {
-                    window.videojs(playerEl).play();
-                }
             }
             return true;
         },

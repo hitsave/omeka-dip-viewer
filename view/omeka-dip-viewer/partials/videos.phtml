@@ -11,6 +11,11 @@ $sheetUrl = function (array $file) use ($view, $display, $itemId, $mediaId, $sit
     $key = (string) ($file['key'] ?? '');
     return isset($display[$key]) ? $view->dipFileUrl($itemId, $mediaId, $key, 'display', $siteSlug ?? null) : '';
 };
+// Poster frame (grid preview) of a video, when packaged.
+$posterUrl = function (array $file) use ($view, $grid, $itemId, $mediaId, $siteSlug): string {
+    $key = (string) ($file['key'] ?? '');
+    return isset($grid[$key]) ? $view->dipFileUrl($itemId, $mediaId, $key, 'thumb', $siteSlug ?? null) : '';
+};
 ?>
 <section class="omeka-dip-videos" aria-label="<?= $escape($translate('Video playback')) ?>" data-omeka-dip-videos>
     <h4><?= $escape($translate('Video')) ?><?= $total > 0 ? $escape(' (' . number_format($total) . ')') : '' ?></h4>
@@ -75,8 +80,10 @@ $sheetUrl = function (array $file) use ($view, $display, $itemId, $mediaId, $sit
                                 data-label="<?= $escape($label) ?>"
             data-dip-video-key="<?= $escape((string) $file['key']) ?>"
             data-sheet-src="<?= $escape($sheetUrl($file)) ?>"
+                                data-poster-src="<?= $escape($posterUrl($file)) ?>"
                                 data-dip-video-key="<?= $escape((string) $file['key']) ?>"
                                 data-sheet-src="<?= $escape($sheetUrl($file)) ?>"
+                                data-poster-src="<?= $escape($posterUrl($file)) ?>"
                                 <?php if ($size > 0): ?>
                                     data-size-bytes="<?= (int) $size ?>"
                                 <?php endif; ?>
@@ -117,6 +124,7 @@ $sheetUrl = function (array $file) use ($view, $display, $itemId, $mediaId, $sit
             data-label="<?= $escape($label) ?>"
             data-dip-video-key="<?= $escape((string) $file['key']) ?>"
             data-sheet-src="<?= $escape($sheetUrl($file)) ?>"
+                                data-poster-src="<?= $escape($posterUrl($file)) ?>"
             <?php if ($size > 0): ?>
                 data-size-bytes="<?= (int) $size ?>"
             <?php endif; ?>
