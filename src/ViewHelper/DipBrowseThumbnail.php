@@ -18,6 +18,19 @@ class DipBrowseThumbnail extends AbstractHtmlElement
     }
 
     /**
+     * URL of the item's package preview image (the one browse lists show), or null when it has
+     * none or has a custom cover. Used by themes for link previews (og:image).
+     */
+    public function url(ItemRepresentation $item, string $type = 'large'): ?string
+    {
+        if (!$this->browsePreview->hasBrowsePreview($item)) {
+            return null;
+        }
+
+        return $this->browsePreview->getPreviewUrl($item, $type);
+    }
+
+    /**
      * @param array $attribs
      */
     public function __invoke(ItemRepresentation $item, string $type = 'medium', array $attribs = []): string
