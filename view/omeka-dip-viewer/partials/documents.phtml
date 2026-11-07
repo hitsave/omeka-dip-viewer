@@ -1,0 +1,42 @@
+<?php
+/**
+ * PDFs and documents with a PDF web copy: first-page thumbnails (when packaged) that open the PDF
+ * in the browser. Word/RTF/WRI files on disc contents are converted to PDF at packaging.
+ */
+$translate = $this->plugin('translate');
+$escape = $this->plugin('escapeHtml');
+$view = $this;
+$grid = is_array($previewManifest ?? null) ? ($previewManifest['grid'] ?? []) : [];
+$total = count($documentFiles);
+?>
+<section class="omeka-dip-documents" aria-label="<?= $escape($translate('Documents')) ?>">
+    <h4><?= $escape($translate('Documents')) ?> <?= $escape('(' . number_format($total) . ')') ?></h4>
+    <ul class="omeka-dip-documents__grid">
+        <?php foreach ($documentFiles as $file): ?>
+            <?php
+            $key = (string) $file['key'];
+            $isCopy = strtolower((string) ($file['access_mime'] ?? '')) === 'application/pdf';
+            $href = $view->dipFileUrl($itemId, $mediaId, $key, $isCopy ? 'access' : null, $siteSlug ?? null);
+            $label = (string) ($file['label'] ?? $key);
+            $folder = dirname((string) ($file['relative_path'] ?? ''));
+            ?>
+            <li class="omeka-dip-document" data-dip-document-key="<?= $escape($key) ?>">
+                <a href="<?= $escape($href) ?>" target="_blank" rel="noopener" class="omeka-dip-document__link">
+                    <?php if (isset($grid[$key])): ?>
+                        <img src="<?= $escape($view->dipFileUrl($itemId, $mediaId, $key, 'thumb', $siteSlug ?? null)) ?>"
+                             alt="" loading="lazy" decoding="async" class="omeka-dip-document__thumb">
+                    <?php else: ?>
+                        <span class="omeka-dip-document__thumb omeka-dip-document__thumb--icon" aria-hidden="true">PDF</span>
+                    <?php endif; ?>
+                    <span class="omeka-dip-document__label"><?= $escape($label) ?></span>
+                    <?php if ($folder !== '' && $folder !== '.'): ?>
+                        <span class="omeka-dip-document__folder omeka-dip-size"><?= $escape($folder) ?></span>
+                    <?php endif; ?>
+                    <?php if ($isCopy): ?>
+                        <span class="omeka-dip-document__note omeka-dip-size"><?= $escape($translate('PDF copy')) ?></span>
+                    <?php endif; ?>
+                </a>
+            </li>
+        <?php endforeach; ?>
+    </ul>
+</section>

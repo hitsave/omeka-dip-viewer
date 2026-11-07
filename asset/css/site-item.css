@@ -425,3 +425,90 @@ html[data-hitsave-theme="dark"] #content .omeka-dip-gallery-dialog .omeka-dip-ga
     word-break: break-word;
     color: #222;
 }
+
+/* Video posters (disc contents): the frame fills the thumb, the play icon sits on top. */
+.omeka-dip-video-pick__thumb {
+    position: relative;
+    overflow: hidden;
+}
+
+.omeka-dip-video-pick__poster {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.omeka-dip-video-pick__thumb .omeka-dip-video-pick__icon {
+    position: relative;
+}
+
+.omeka-dip-video-sheet {
+    margin: 0.25rem 0 0;
+}
+
+/* Documents: first-page thumbnails that open the PDF. */
+.omeka-dip-documents {
+    margin-top: 1.5rem;
+}
+
+.omeka-dip-documents__grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.75rem;
+}
+
+.omeka-dip-document__link {
+    display: grid;
+    gap: 0.25rem;
+    text-decoration: none;
+    min-width: 0;
+}
+
+.omeka-dip-document__thumb {
+    display: block;
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    object-position: top;
+    border: 1px solid rgba(127, 127, 127, 0.35);
+    background: #fff;
+}
+
+.omeka-dip-document__thumb--icon {
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    color: #666;
+    background: #f3f3f3;
+}
+
+.omeka-dip-document__label {
+    font-size: 0.85rem;
+    overflow-wrap: anywhere;
+}
+
+.omeka-dip-document__folder,
+.omeka-dip-document__note {
+    font-size: 0.75rem;
+}
+
+/* Package tree: files that open in the viewer keep a separate download link. */
+.omeka-dip-file-download {
+    margin-left: 0.25rem;
+    text-decoration: none;
+    opacity: 0.7;
+}
+
+.omeka-dip-file-download:hover,
+.omeka-dip-file-download:focus-visible {
+    opacity: 1;
+}
+
+.omeka-dip-file-nodownload {
+    opacity: 0.8;
+}

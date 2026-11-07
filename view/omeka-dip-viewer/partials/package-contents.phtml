@@ -10,17 +10,40 @@ $tree = $index['tree'] ?? null;
 
 $view = $this;
 $itemId = (int) ($itemId ?? $media->item()->id());
-$renderFileLink = function (array $file, bool $showFullPath = false) use ($escape, $itemId, $mediaId, $view, $siteSlug): string {
-    $href = $view->dipFileUrl($itemId, $mediaId, $file['key'], null, $siteSlug ?? null);
+$openInViewer = is_array($openInViewer ?? null) ? $openInViewer : [];
+$renderFileLink = function (array $file, bool $showFullPath = false) use ($escape, $translate, $itemId, $mediaId, $view, $siteSlug, $openInViewer): string {
+    $key = (string) $file['key'];
+    $href = $view->dipFileUrl($itemId, $mediaId, $key, null, $siteSlug ?? null);
     $label = $file['label'];
     if ($showFullPath && !empty($file['relative_path'])) {
         $label = $file['relative_path'];
     }
-    $html = '<a href="' . $escape($href) . '">' . $escape($label) . '</a>';
-    if (!empty($file['size'])) {
-        $html .= ' <span class="omeka-dip-size">(' . $escape(number_format((int) $file['size'])) . ' B)</span>';
+    $size = !empty($file['size'])
+        ? ' <span class="omeka-dip-size">(' . $escape(number_format((int) $file['size'])) . ' B)</span>'
+        : '';
+    if (($file['download'] ?? true) === false) {
+        // Programs on disc contents: listed, never served.
+        return '<span class="omeka-dip-file-nodownload">' . $escape($label) . '</span>' . $size
+            . ' <span class="omeka-dip-size">' . $escape($translate('program, not downloadable')) . '</span>';
     }
-    return $html;
+    $kind = $openInViewer[$key] ?? null;
+    if ($kind === null) {
+        return '<a href="' . $escape($href) . '">' . $escape($label) . '</a>' . $size;
+    }
+    // Opens in the viewer (lightbox, video player, PDF in a new tab); the original stays a download.
+    $openHref = $href;
+    $target = '';
+    if ($kind === 'document') {
+        $isCopy = strtolower((string) ($file['access_mime'] ?? '')) === 'application/pdf';
+        $openHref = $view->dipFileUrl($itemId, $mediaId, $key, $isCopy ? 'access' : null, $siteSlug ?? null);
+        $target = ' target="_blank" rel="noopener"';
+    }
+
+    return '<a href="' . $escape($openHref) . '" data-dip-open="' . $escape($kind) . '" data-dip-key="'
+        . $escape($key) . '"' . $target . '>' . $escape($label) . '</a>' . $size
+        . ' <a href="' . $escape($href) . '" class="omeka-dip-file-download" title="'
+        . $escape($translate('Download original')) . '" aria-label="' . $escape($translate('Download original') . ': ' . $label)
+        . '">&#8595;</a>';
 };
 
 $renderTree = null;

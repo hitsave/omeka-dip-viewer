@@ -21,6 +21,16 @@ $siteSlug = $siteSlug ?? null;
 <?php if (!empty($videoFiles)): ?>
     <?= $this->partial('omeka-dip-viewer/partials/videos', [
         'videoFiles' => $videoFiles,
+        'previewManifest' => $previewManifest ?? null,
+        'mediaId' => $mediaId,
+        'itemId' => $itemId,
+        'siteSlug' => $siteSlug,
+    ]) ?>
+<?php endif; ?>
+<?php if (!empty($documentFiles)): ?>
+    <?= $this->partial('omeka-dip-viewer/partials/documents', [
+        'documentFiles' => $documentFiles,
+        'previewManifest' => $previewManifest ?? null,
         'mediaId' => $mediaId,
         'itemId' => $itemId,
         'siteSlug' => $siteSlug,
@@ -58,6 +68,7 @@ $siteSlug = $siteSlug ?? null;
     <?= $this->partial('omeka-dip-viewer/partials/package-contents', [
         'media' => $media,
         'index' => $index,
+        'openInViewer' => $openInViewer ?? [],
         'itemId' => $itemId,
         'siteSlug' => $siteSlug,
     ]) ?>

@@ -4,6 +4,13 @@ $escape = $this->plugin('escapeHtml');
 $view = $this;
 $total = count($videoFiles);
 $playerId = 'omeka-dip-video-player-' . (int) $mediaId;
+$grid = is_array($previewManifest ?? null) ? ($previewManifest['grid'] ?? []) : [];
+$display = is_array($previewManifest ?? null) ? ($previewManifest['display'] ?? []) : [];
+// Contact sheet (display preview) of a video, when the package has one (disc contents).
+$sheetUrl = function (array $file) use ($view, $display, $itemId, $mediaId, $siteSlug): string {
+    $key = (string) ($file['key'] ?? '');
+    return isset($display[$key]) ? $view->dipFileUrl($itemId, $mediaId, $key, 'display', $siteSlug ?? null) : '';
+};
 ?>
 <section class="omeka-dip-videos" aria-label="<?= $escape($translate('Video playback')) ?>" data-omeka-dip-videos>
     <h4><?= $escape($translate('Video')) ?><?= $total > 0 ? $escape(' (' . number_format($total) . ')') : '' ?></h4>
@@ -24,6 +31,9 @@ $playerId = 'omeka-dip-video-player-' . (int) $mediaId;
             </video-js>
         </div>
         <p class="omeka-dip-video-caption" aria-live="polite"></p>
+        <p class="omeka-dip-video-sheet" hidden>
+            <a href="#" class="omeka-dip-video-sheet-link" target="_blank" rel="noopener"><?= $escape($translate('Contact sheet')) ?></a>
+        </p>
         <p class="omeka-dip-video-download">
             <?= $escape($translate('Download original')) ?>:
             <a href="#" class="omeka-dip-video-download-link"></a>
@@ -53,11 +63,19 @@ $playerId = 'omeka-dip-video-player-' . (int) $mediaId;
                                 data-playback-type="<?= $escape($mime) ?>"
                                 data-download-src="<?= $escape($downloadUrl) ?>"
                                 data-label="<?= $escape($label) ?>"
+            data-dip-video-key="<?= $escape((string) $file['key']) ?>"
+            data-sheet-src="<?= $escape($sheetUrl($file)) ?>"
+                                data-dip-video-key="<?= $escape((string) $file['key']) ?>"
+                                data-sheet-src="<?= $escape($sheetUrl($file)) ?>"
                                 <?php if ($size > 0): ?>
                                     data-size-bytes="<?= (int) $size ?>"
                                 <?php endif; ?>
                             >
                                 <span class="omeka-dip-video-pick__thumb" aria-hidden="true">
+                                    <?php if (isset($grid[(string) $file['key']])): ?>
+                                        <img src="<?= $escape($view->dipFileUrl($itemId, $mediaId, (string) $file['key'], 'thumb', $siteSlug ?? null)) ?>"
+                                             alt="" loading="lazy" decoding="async" class="omeka-dip-video-pick__poster">
+                                    <?php endif; ?>
                                     <span class="omeka-dip-video-pick__icon"></span>
                                 </span>
                                 <span class="omeka-dip-video-pick__label"><?= $escape($label) ?></span>
@@ -87,6 +105,8 @@ $playerId = 'omeka-dip-video-player-' . (int) $mediaId;
             data-playback-type="<?= $escape($mime) ?>"
             data-download-src="<?= $escape($downloadUrl) ?>"
             data-label="<?= $escape($label) ?>"
+            data-dip-video-key="<?= $escape((string) $file['key']) ?>"
+            data-sheet-src="<?= $escape($sheetUrl($file)) ?>"
             <?php if ($size > 0): ?>
                 data-size-bytes="<?= (int) $size ?>"
             <?php endif; ?>

@@ -79,6 +79,16 @@
         }
 
         var caption = root.querySelector('.omeka-dip-video-caption');
+        var sheetWrap = root.querySelector('.omeka-dip-video-sheet');
+        var sheetLink = root.querySelector('.omeka-dip-video-sheet-link');
+
+        function updateSheet(pick) {
+            var sheet = pick ? pick.getAttribute('data-sheet-src') || '' : '';
+            if (sheetWrap && sheetLink) {
+                sheetWrap.hidden = sheet === '';
+                sheetLink.href = sheet || '#';
+            }
+        }
         var downloadLink = root.querySelector('.omeka-dip-video-download-link');
         var downloadSize = root.querySelector('.omeka-dip-video-download-size');
 
@@ -113,6 +123,7 @@
             if (downloadSize && !downloadSize.textContent) {
                 downloadSize.textContent = formatBytes(sizeBytes);
             }
+            updateSheet(pick);
         }
 
         function applyPick(pick) {
@@ -142,6 +153,7 @@
             if (downloadSize) {
                 downloadSize.textContent = formatBytes(sizeBytes);
             }
+            updateSheet(pick);
 
             picks.forEach(function (p) {
                 var selected = p === pick;
@@ -201,6 +213,26 @@
     function boot() {
         document.querySelectorAll('[data-omeka-dip-videos]').forEach(initVideoSection);
     }
+
+    // The package tree plays a video here instead of downloading it.
+    window.OmekaDipVideos = {
+        play: function (key) {
+            var pick = document.querySelector('.omeka-dip-video-pick[data-dip-video-key="' + CSS.escape(key) + '"]');
+            if (!pick) {
+                return false;
+            }
+            pick.click();
+            var section = pick.closest('[data-omeka-dip-videos]');
+            if (section) {
+                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                var playerEl = section.querySelector('video-js');
+                if (playerEl && typeof window.videojs === 'function') {
+                    window.videojs(playerEl).play();
+                }
+            }
+            return true;
+        },
+    };
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', boot);

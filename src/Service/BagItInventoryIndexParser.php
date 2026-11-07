@@ -34,6 +34,7 @@ class BagItInventoryIndexParser
             $size = (int) ($rec['size_bytes'] ?? 0);
             $mime = isset($rec['mime']) ? (trim((string) $rec['mime']) ?: null) : null;
             $mime = $mime ?: $this->guessMime($label);
+            [$accessPath, $accessMime, $accessSize] = $this->accessCopy($rec['access'] ?? null);
             $files[] = [
                 'key' => '',
                 'file_id' => '',
@@ -42,10 +43,16 @@ class BagItInventoryIndexParser
                 'inner_path' => $normalized,
                 'size' => $size,
                 'mime' => $mime,
+                'kind' => isset($rec['kind']) ? (string) $rec['kind'] : null,
+                // Disc contents bags list programs without serving them (inventory "download": false).
+                'download' => !array_key_exists('download', $rec) || $rec['download'] !== false,
                 'group_id' => null,
-                'access_inner_path' => null,
-                'access_size' => null,
-                'access_mime' => null,
+                'access_inner_path' => $accessPath,
+                'access_size' => $accessSize,
+                'access_mime' => $accessMime,
+                'access_label' => $accessPath !== null
+                    ? pathinfo($label, PATHINFO_FILENAME) . '.' . strtolower(pathinfo($accessPath, PATHINFO_EXTENSION))
+                    : null,
             ];
         }
         if ($files === []) {
@@ -92,6 +99,27 @@ class BagItInventoryIndexParser
         }
 
         return $root;
+    }
+
+    /**
+     * Web copy of a payload file (inventory "access": {path, mime, size_bytes}); only files under
+     * metadata/hitsave/access/ are served this way.
+     *
+     * @return array{0: ?string, 1: ?string, 2: ?int}
+     */
+    protected function accessCopy(mixed $access): array
+    {
+        if (!is_array($access)) {
+            return [null, null, null];
+        }
+        $path = ltrim(str_replace('\\', '/', (string) ($access['path'] ?? '')), '/');
+        if (!str_starts_with($path, 'metadata/hitsave/access/') || str_contains($path, '..')) {
+            return [null, null, null];
+        }
+        $mime = trim((string) ($access['mime'] ?? '')) ?: $this->guessMime($path);
+        $size = isset($access['size_bytes']) ? (int) $access['size_bytes'] : null;
+
+        return [$path, $mime, $size];
     }
 
     protected function guessMime(string $filename): ?string
