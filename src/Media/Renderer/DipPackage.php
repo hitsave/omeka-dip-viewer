@@ -126,6 +126,18 @@ class DipPackage implements RendererInterface
             if ($this->dipConfig->isVideoPlayerEnabled()) {
                 $videoFiles = $this->videoFilter->filterPlaybackFiles($index['files'] ?? []);
             }
+            $documentFiles = $this->documentFiles($index['files'] ?? []);
+        }
+        // Files the package tree opens in the viewer instead of downloading.
+        $openInViewer = [];
+        foreach ($galleryFiles as $file) {
+            $openInViewer[(string) $file['key']] = 'image';
+        }
+        foreach ($videoFiles as $file) {
+            $openInViewer[(string) $file['key']] = 'video';
+        }
+        foreach ($documentFiles ?? [] as $file) {
+            $openInViewer[(string) $file['key']] = 'document';
         }
         $galleryMaxDisplay = $this->dipConfig->getGalleryMaxDisplay();
 
@@ -135,6 +147,8 @@ class DipPackage implements RendererInterface
             'previewManifest' => $previewManifest,
             'galleryFiles' => $galleryFiles,
             'videoFiles' => $videoFiles,
+            'documentFiles' => $documentFiles ?? [],
+            'openInViewer' => $openInViewer,
             'packagedPreviewKeys' => $packagedPreviewKeys,
             'packagedPreviewLabels' => $packagedPreviewLabels,
             'scanFiles' => $scanFiles,
@@ -147,6 +161,26 @@ class DipPackage implements RendererInterface
             'thresholdBytes' => (int) ($data['large_package_threshold_bytes'] ?? 0),
             'siteSlug' => $siteSlug,
         ]);
+    }
+
+    /**
+     * PDFs, and documents with a PDF web copy (disc contents: Word/RTF/WRI converted at packaging).
+     *
+     * @param list<array<string, mixed>> $files
+     * @return list<array<string, mixed>>
+     */
+    protected function documentFiles(array $files): array
+    {
+        $out = [];
+        foreach ($files as $file) {
+            $mime = strtolower((string) ($file['mime'] ?? ''));
+            $accessMime = strtolower((string) ($file['access_mime'] ?? ''));
+            if ($accessMime === 'application/pdf' || $mime === 'application/pdf') {
+                $out[] = $file;
+            }
+        }
+
+        return $out;
     }
 
     protected function resolveSiteSlug(PhpRenderer $view): ?string

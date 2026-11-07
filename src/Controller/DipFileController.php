@@ -171,6 +171,29 @@ class DipFileController extends AbstractActionController
         $label = $entry['label'];
         $sizeHint = (int) ($entry['size'] ?? 0);
 
+        if ($variant === 'display') {
+            // Packaged display preview (contact sheet of a video, converted image) of a non-dump package.
+            $previewInner = $catalogPolicy->resolveManifestPreviewInnerPath(
+                $indexService->getPreviewManifest($media),
+                $fileKey,
+                'display'
+            );
+            if ($previewInner === null) {
+                return $this->getResponse()->setStatusCode(404);
+            }
+
+            return $this->sendS3ObjectResponse(
+                $s3Location['bucket'],
+                $s3Location['prefix'],
+                $previewInner,
+                str_ends_with(strtolower($previewInner), '.png') ? 'image/png' : 'image/jpeg',
+                $label,
+                $services
+            );
+        }
+        if ($variant === 'original' && ($entry['download'] ?? true) === false) {
+            return $this->getResponse()->setStatusCode(404);
+        }
         if ($variant === 'access') {
             if (empty($entry['access_inner_path'])) {
                 return $this->getResponse()->setStatusCode(404);

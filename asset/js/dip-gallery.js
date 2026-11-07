@@ -667,7 +667,53 @@
         embeds.appendChild(section);
     }
 
+    // Open an image in its gallery's lightbox (the package tree uses this instead of downloading).
+    function openGalleryKey(key) {
+        var roots = document.querySelectorAll('.omeka-dip-gallery');
+        for (var i = 0; i < roots.length; i++) {
+            var root = roots[i];
+            var entries = getGalleryIndex(root);
+            for (var j = 0; j < entries.length; j++) {
+                if (entries[j].key !== key) {
+                    continue;
+                }
+                var dialog = root.querySelector('.omeka-dip-gallery-dialog');
+                var fullImg = root.querySelector('.omeka-dip-gallery-full');
+                var caption = root.querySelector('.omeka-dip-gallery-caption');
+                if (!dialog || !fullImg || !dialog.showModal) {
+                    return false;
+                }
+                showLightboxAtIndex(root, j, dialog, fullImg, caption);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function bindPackageTree() {
+        document.addEventListener('click', function (event) {
+            var link = event.target.closest('a[data-dip-open]');
+            if (!link || event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) {
+                return;
+            }
+            var kind = link.getAttribute('data-dip-open');
+            var key = link.getAttribute('data-dip-key') || '';
+            var opened = false;
+            if (kind === 'image') {
+                opened = openGalleryKey(key);
+            } else if (kind === 'video' && window.OmekaDipVideos) {
+                opened = window.OmekaDipVideos.play(key);
+            }
+            if (opened) {
+                event.preventDefault();
+            }
+        });
+    }
+
+    window.OmekaDipGallery = { openKey: openGalleryKey };
+
     function boot() {
+        bindPackageTree();
         promoteDipMediaToFullWidth();
         mergeNativeMediaIntoDipGallery();
         buildNativeMediaGalleryFromEmbeds();
