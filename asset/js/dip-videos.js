@@ -81,12 +81,44 @@
         var caption = root.querySelector('.omeka-dip-video-caption');
         var sheetWrap = root.querySelector('.omeka-dip-video-sheet');
         var sheetLink = root.querySelector('.omeka-dip-video-sheet-link');
+        var sheetDialog = root.querySelector('.omeka-dip-video-sheet-dialog');
+
+        // The contact sheet opens in a lightbox like gallery images (a new tab only on
+        // ctrl/cmd/middle click, or without <dialog> support).
+        if (sheetLink && sheetDialog && sheetDialog.showModal) {
+            var sheetImg = sheetDialog.querySelector('.omeka-dip-gallery-full');
+            var sheetCaption = sheetDialog.querySelector('.omeka-dip-gallery-caption');
+            sheetLink.addEventListener('click', function (event) {
+                var href = sheetLink.getAttribute('href') || '';
+                if (!href || href === '#' || event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) {
+                    return;
+                }
+                event.preventDefault();
+                var label = sheetLink.getAttribute('data-label') || '';
+                sheetImg.src = href;
+                sheetImg.alt = label ? 'Contact sheet: ' + label : 'Contact sheet';
+                if (sheetCaption) {
+                    sheetCaption.textContent = sheetImg.alt;
+                }
+                sheetDialog.showModal();
+            });
+            sheetDialog.addEventListener('click', function (event) {
+                if (event.target === sheetDialog) {
+                    sheetDialog.close();
+                }
+            });
+            sheetDialog.addEventListener('close', function () {
+                sheetImg.removeAttribute('src');
+                sheetImg.alt = '';
+            });
+        }
 
         function updateSheet(pick) {
             var sheet = pick ? pick.getAttribute('data-sheet-src') || '' : '';
             if (sheetWrap && sheetLink) {
                 sheetWrap.hidden = sheet === '';
                 sheetLink.href = sheet || '#';
+                sheetLink.setAttribute('data-label', pick ? pick.getAttribute('data-label') || '' : '');
             }
         }
         var downloadLink = root.querySelector('.omeka-dip-video-download-link');
