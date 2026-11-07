@@ -487,14 +487,18 @@ html[data-hitsave-theme="dark"] #content .omeka-dip-gallery-dialog .omeka-dip-ga
     background: #f3f3f3;
 }
 
-.omeka-dip-document__label {
+#content .omeka-dip-documents .omeka-dip-document__label {
     font-size: 0.85rem;
+    line-height: 1.3;
     overflow-wrap: anywhere;
 }
 
-.omeka-dip-document__folder,
-.omeka-dip-document__note {
-    font-size: 0.75rem;
+/* Folder / "PDF copy": quieter than the file name (the theme resets .omeka-dip-size, so own class). */
+#content .omeka-dip-documents .omeka-dip-document__meta {
+    font-size: 0.72rem;
+    line-height: 1.3;
+    color: var(--hs-content-muted, #666);
+    overflow-wrap: anywhere;
 }
 
 /* Package tree: files that open in the viewer keep a separate download link. */
