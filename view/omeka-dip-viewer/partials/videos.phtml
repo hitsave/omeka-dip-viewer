@@ -19,11 +19,6 @@ $posterUrl = function (array $file) use ($view, $grid, $itemId, $mediaId, $siteS
 ?>
 <section class="omeka-dip-videos" aria-label="<?= $escape($translate('Video playback')) ?>" data-omeka-dip-videos>
     <h4><?= $escape($translate('Video')) ?><?= $total > 0 ? $escape(' (' . number_format($total) . ')') : '' ?></h4>
-    <?php if ($total > 1): ?>
-        <p class="omeka-dip-video-note">
-            <?= $escape($translate('Drag or scroll over the carousel and choose a clip to play. Access copies stream in the browser; package contents lists originals for download.')) ?>
-        </p>
-    <?php endif; ?>
     <div class="omeka-dip-video-stage">
         <div class="omeka-dip-video-player-wrap">
             <video-js

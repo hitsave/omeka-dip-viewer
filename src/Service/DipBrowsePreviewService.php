@@ -88,6 +88,15 @@ class DipBrowsePreviewService
 
     public function findDipMedia(ItemRepresentation $item): ?MediaRepresentation
     {
+        // A data-disc dump shows its disc contents (collage of the disc's images): the dump's own
+        // package holds only the disc image, and a preview only when the disc has scans.
+        foreach ($item->media() as $media) {
+            if (DipPackageMedia::isDipPackage($media->renderer())
+                && self::isDiscContentsPrefix((string) ($media->mediaData()['package_storage_prefix'] ?? ''))
+            ) {
+                return $media;
+            }
+        }
         $primary = $item->primaryMedia();
         if ($primary && DipPackageMedia::isDipPackage($primary->renderer())) {
             return $primary;
@@ -104,6 +113,12 @@ class DipBrowsePreviewService
     /**
      * @return array{0: string, 1: string} absolute path and mime
      */
+    /** Disc contents package of a data-disc dump (archiver build_disc_contents_bag.py). */
+    public static function isDiscContentsPrefix(string $prefix): bool
+    {
+        return str_starts_with(ltrim(str_replace('\\', '/', $prefix), '/'), 'disc-contents/');
+    }
+
     public function resolvePreviewFile(MediaRepresentation $media, string $type): array
     {
         if (!DipPackageMedia::isDipPackage($media->renderer())) {
