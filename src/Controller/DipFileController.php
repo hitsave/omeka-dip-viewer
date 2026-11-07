@@ -149,7 +149,7 @@ class DipFileController extends AbstractActionController
                 return $this->getResponse()->setStatusCode(404);
             }
             $mime = str_ends_with(strtolower($previewInner), '.png') ? 'image/png' : 'image/jpeg';
-            $label = $fileKey === 'menu' ? 'DVD menu' : $fileKey;
+            $label = $fileKey === 'menu' ? $catalogPolicy->galleryLabel($manifest, $fileKey) : $fileKey;
 
             return $this->sendS3ObjectResponse(
                 $s3Location['bucket'],

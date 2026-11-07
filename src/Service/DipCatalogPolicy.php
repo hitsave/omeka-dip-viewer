@@ -120,6 +120,13 @@ class DipCatalogPolicy
      */
     public function galleryLabel(?array $manifest, string $fileKey): string
     {
+        if ($fileKey === 'menu') {
+            // The disc's menu still, or (archiver dvd_menu_kind) a contact sheet of its main title
+            // when the disc has no usable menu.
+            $kind = is_array($manifest) ? ($manifest['dvd_menu_kind'] ?? null) : null;
+
+            return $kind === 'contact_sheet' ? 'Contact sheet' : 'DVD menu';
+        }
         $files = is_array($manifest) ? ($manifest['files'] ?? null) : null;
         $info = is_array($files) ? ($files[$fileKey] ?? null) : null;
         $path = is_array($info) ? $this->payloadPath((string) ($info['path'] ?? '')) : null;

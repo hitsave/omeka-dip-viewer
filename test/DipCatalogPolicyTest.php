@@ -47,6 +47,11 @@ assert($policy->resolveScanPayloadInnerPath($scanManifest, 'f4') === null);   //
 assert($policy->resolveScanPayloadInnerPath($manifest, 'menu') === null);     // old manifest: no scans
 assert($policy->scanFiles(null) === []);
 assert($policy->galleryLabel($scanManifest, 'f7') === '0002.png');
-assert($policy->galleryLabel($manifest, 'menu') === 'menu');
+assert($policy->galleryLabel($manifest, 'menu') === 'DVD menu');
+// A disc without a usable menu: the archiver packs a contact sheet in the menu's place.
+$sheetManifest = $manifest + ['dvd_menu_kind' => 'contact_sheet'];
+assert($policy->galleryLabel($sheetManifest, 'menu') === 'Contact sheet');
+assert($policy->packagedPreviewFileKeys($sheetManifest) === ['menu']);
+assert($policy->galleryLabel(null, 'menu') === 'DVD menu');
 
 echo "DipCatalogPolicyTest OK\n";
