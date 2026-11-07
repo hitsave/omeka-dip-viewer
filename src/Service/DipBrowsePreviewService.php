@@ -143,18 +143,39 @@ class DipBrowsePreviewService
             );
         }
 
+        // A size the package didn't pack (e.g. "large" for link previews): its packaged browse
+        // image (medium) is the fallback. Dumps use it directly: their payload isn't served, and a
+        // collage of large scans is slow and can fail.
+        $packaged = is_array($manifest) && is_array($manifest['browse'] ?? null) ? $manifest['browse'] : [];
+        $fallback = $packaged['medium'] ?? ($packaged !== [] ? reset($packaged) : null);
+        if ($fallback && (new DipCatalogPolicy())->isPreservationDump($media)) {
+            return $this->resolvePackagedBrowseFile($media, $s3Bucket, $s3Prefix, (string) $fallback);
+        }
+
         $galleryFiles = $this->listGalleryFiles($media);
         if ($galleryFiles === []) {
-            // A size the package didn't pack (e.g. "large" for link previews) on a package whose
-            // payload isn't served (dumps): its packaged browse image is the best there is.
-            $packaged = is_array($manifest) && is_array($manifest['browse'] ?? null) ? $manifest['browse'] : [];
-            $fallback = $packaged['medium'] ?? ($packaged !== [] ? reset($packaged) : null);
             if ($fallback) {
                 return $this->resolvePackagedBrowseFile($media, $s3Bucket, $s3Prefix, (string) $fallback);
             }
             throw new \RuntimeException('No gallery-eligible images in DIP.');
         }
+        try {
+            return $this->buildDynamicPreview($media, $galleryFiles, $type, $s3Bucket, $s3Prefix);
+        } catch (\Throwable $e) {
+            if ($fallback) {
+                return $this->resolvePackagedBrowseFile($media, $s3Bucket, $s3Prefix, (string) $fallback);
+            }
+            throw $e;
+        }
+    }
 
+    /**
+     * Collage (or single-image fallback) built from the package's own gallery images, cached.
+     *
+     * @return array{0: string, 1: string}
+     */
+    protected function buildDynamicPreview(MediaRepresentation $media, array $galleryFiles, string $type, string $s3Bucket, string $s3Prefix): array
+    {
         $versionKey = $this->versionKey($type);
         $minCollage = $this->dipConfig->getBrowsePreviewCollageMinImages();
         if (count($galleryFiles) >= $minCollage) {
