@@ -532,15 +532,15 @@ html[data-hitsave-theme="dark"] #content .omeka-dip-gallery-dialog .omeka-dip-ga
     display: none;
 }
 
+/* Two glyphs instead of a rotated one: rotating the arrow in its box made it wobble. */
 .omeka-dip-folder-details > summary::before {
     content: "\25B8";
     display: inline-block;
     width: 1em;
-    transition: transform 0.15s ease;
 }
 
 .omeka-dip-folder-details[open] > summary::before {
-    transform: rotate(90deg);
+    content: "\25BE";
 }
 
 #content .omeka-dip-folder-count {
@@ -577,8 +577,3 @@ html[data-hitsave-theme="dark"] #content .omeka-dip-gallery-dialog .omeka-dip-ga
     border-color: currentColor;
 }
 
-@media (prefers-reduced-motion: reduce) {
-    .omeka-dip-folder-details > summary::before {
-        transition: none;
-    }
-}
