@@ -691,6 +691,18 @@
     }
 
     function bindPackageTree() {
+        // "Expand all" / "Collapse all" above a package tree.
+        document.addEventListener('click', function (event) {
+            var toggle = event.target.closest('[data-dip-tree-open]');
+            if (!toggle) {
+                return;
+            }
+            var open = toggle.getAttribute('data-dip-tree-open') === '1';
+            var aside = toggle.closest('.omeka-dip-package__contents') || document;
+            aside.querySelectorAll('details.omeka-dip-folder-details').forEach(function (d) {
+                d.open = open;
+            });
+        });
         document.addEventListener('click', function (event) {
             var link = event.target.closest('a[data-dip-open]');
             if (!link || event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) {

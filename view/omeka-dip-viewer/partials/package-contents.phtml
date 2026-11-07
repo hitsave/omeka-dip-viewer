@@ -46,8 +46,21 @@ $renderFileLink = function (array $file, bool $showFullPath = false) use ($escap
         . '">&#8595;</a>';
 };
 
+// Folders collapse like a file browser (<details>). Small packages open fully; larger ones open the
+// top level only, so a big press kit doesn't start as a wall of files.
+$countFiles = null;
+$countFiles = function (array $node) use (&$countFiles): int {
+    $n = count($node['files'] ?? []);
+    foreach ($node['children'] ?? [] as $child) {
+        $n += $countFiles($child);
+    }
+    return $n;
+};
+$openAllBelow = 40;
+$totalFiles = is_array($tree) ? $countFiles($tree) : 0;
+$hasFolders = is_array($tree) && !empty($tree['children']);
 $renderTree = null;
-$renderTree = function (array $node) use (&$renderTree, $escape, $filesByKey, $renderFileLink): void {
+$renderTree = function (array $node, int $depth = 0) use (&$renderTree, $escape, $filesByKey, $renderFileLink, $countFiles, $totalFiles, $openAllBelow): void {
     $hasChildren = !empty($node['children']);
     $hasFiles = !empty($node['files']);
     if (!$hasChildren && !$hasFiles) {
@@ -62,10 +75,12 @@ $renderTree = function (array $node) use (&$renderTree, $escape, $filesByKey, $r
         echo '<li class="omeka-dip-file">' . $renderFileLink($file) . '</li>';
     }
     foreach ($node['children'] ?? [] as $child) {
-        echo '<li class="omeka-dip-folder">';
-        echo '<span class="omeka-dip-folder-name">' . $escape($child['name']) . '</span>';
-        $renderTree($child);
-        echo '</li>';
+        $open = $totalFiles <= $openAllBelow || $depth === 0;
+        echo '<li class="omeka-dip-folder"><details class="omeka-dip-folder-details"' . ($open ? ' open' : '') . '>';
+        echo '<summary><span class="omeka-dip-folder-name">' . $escape($child['name']) . '</span>'
+            . ' <span class="omeka-dip-folder-count">' . $escape(number_format($countFiles($child))) . '</span></summary>';
+        $renderTree($child, $depth + 1);
+        echo '</details></li>';
     }
     echo '</ul>';
 };
@@ -73,6 +88,12 @@ $renderTree = function (array $node) use (&$renderTree, $escape, $filesByKey, $r
 <aside class="omeka-dip-package__contents" aria-label="<?= $escape($translate('Package contents')) ?>">
     <h4><?= $escape($translate('Package contents')) ?></h4>
 <?php if ($tree && (!empty($tree['children']) || !empty($tree['files']))): ?>
+    <?php if ($hasFolders): ?>
+        <p class="omeka-dip-tree-toggles">
+            <button type="button" class="omeka-dip-tree-toggle" data-dip-tree-open="1"><?= $escape($translate('Expand all')) ?></button>
+            <button type="button" class="omeka-dip-tree-toggle" data-dip-tree-open="0"><?= $escape($translate('Collapse all')) ?></button>
+        </p>
+    <?php endif; ?>
     <div class="omeka-dip-tree-root">
         <?php $renderTree($tree); ?>
     </div>
