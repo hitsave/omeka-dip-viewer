@@ -145,6 +145,13 @@ class DipBrowsePreviewService
 
         $galleryFiles = $this->listGalleryFiles($media);
         if ($galleryFiles === []) {
+            // A size the package didn't pack (e.g. "large" for link previews) on a package whose
+            // payload isn't served (dumps): its packaged browse image is the best there is.
+            $packaged = is_array($manifest) && is_array($manifest['browse'] ?? null) ? $manifest['browse'] : [];
+            $fallback = $packaged['medium'] ?? ($packaged !== [] ? reset($packaged) : null);
+            if ($fallback) {
+                return $this->resolvePackagedBrowseFile($media, $s3Bucket, $s3Prefix, (string) $fallback);
+            }
             throw new \RuntimeException('No gallery-eligible images in DIP.');
         }
 
