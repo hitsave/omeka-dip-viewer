@@ -517,7 +517,12 @@ html[data-hitsave-theme="dark"] #content .omeka-dip-gallery-dialog .omeka-dip-ga
     opacity: 0.8;
 }
 
-/* Package tree folders collapse like a file browser. */
+/* Package tree folders collapse like a file browser; the arrow replaces the list bullet. */
+#content li.omeka-dip-folder {
+    list-style: none;
+    margin-left: -1em;
+}
+
 .omeka-dip-folder-details > summary {
     cursor: pointer;
     list-style: none;
@@ -559,7 +564,17 @@ html[data-hitsave-theme="dark"] #content .omeka-dip-gallery-dialog .omeka-dip-ga
 
 #content .omeka-dip-tree-toggle {
     font-size: 0.8rem;
-    padding: 0.15rem 0.5rem;
+    padding: 0.15rem 0.6rem;
+    color: inherit;
+    background: transparent;
+    border: 1px solid var(--hs-content-muted, #888);
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#content .omeka-dip-tree-toggle:hover,
+#content .omeka-dip-tree-toggle:focus-visible {
+    border-color: currentColor;
 }
 
 @media (prefers-reduced-motion: reduce) {
