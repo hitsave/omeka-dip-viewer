@@ -1,6 +1,7 @@
 <?php
 namespace OmekaDipViewer\Media\Renderer;
 
+use OmekaDipViewer\Service\DipBrowsePreviewService;
 use OmekaDipViewer\Service\DipCatalogPolicy;
 use OmekaDipViewer\Service\DipConfig;
 use OmekaDipViewer\Service\DipGalleryFilter;
@@ -143,6 +144,7 @@ class DipPackage implements RendererInterface
 
         return $view->partial('omeka-dip-viewer/media-render', [
             'media' => $media,
+            'packageKind' => DipBrowsePreviewService::packageKind($data),
             'index' => $index,
             'previewManifest' => $previewManifest,
             'galleryFiles' => $galleryFiles,

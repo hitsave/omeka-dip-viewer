@@ -484,12 +484,35 @@
         }
     }
 
+    /**
+     * A dump's own package before its disc contents, whatever the media order. Omeka lists media
+     * by position, and media added after the item's last save have none, so they come first.
+     */
+    function listDiscContentsLast() {
+        document.querySelectorAll('.omeka-dip-package[data-dip-kind="disc-contents"]').forEach(function (pkg) {
+            var render = pkg.closest('.media-render') || pkg;
+            var parent = render.parentNode;
+            var last = null;
+            parent.querySelectorAll(':scope > .media-render').forEach(function (other) {
+                if (!other.querySelector('.omeka-dip-package[data-dip-kind="disc-contents"]')) {
+                    last = other;
+                }
+            });
+            if (last && (render.compareDocumentPosition(last) & Node.DOCUMENT_POSITION_FOLLOWING)) {
+                parent.insertBefore(render, last.nextSibling);
+            }
+        });
+    }
+
     function promoteDipMediaToFullWidth() {
         var stack = document.querySelector('.stack');
         if (!stack || stack.querySelector('.full-width-main .omeka-dip-package')) {
             return;
         }
-        var mediaCol = stack.querySelector('.omeka-dip-package__media');
+        // Disc contents stay in the media column beside the package tree.
+        var mediaCol = stack.querySelector(
+            '.omeka-dip-package:not([data-dip-kind="disc-contents"]) > .omeka-dip-package__media'
+        );
         if (!mediaCol || !mediaCol.querySelector('.omeka-dip-gallery')) {
             return;
         }
@@ -726,6 +749,7 @@
 
     function boot() {
         bindPackageTree();
+        listDiscContentsLast();
         promoteDipMediaToFullWidth();
         mergeNativeMediaIntoDipGallery();
         buildNativeMediaGalleryFromEmbeds();

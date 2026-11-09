@@ -110,15 +110,26 @@ class DipBrowsePreviewService
         return null;
     }
 
-    /**
-     * @return array{0: string, 1: string} absolute path and mime
-     */
     /** Disc contents package of a data-disc dump (archiver build_disc_contents_bag.py). */
     public static function isDiscContentsPrefix(string $prefix): bool
     {
         return str_starts_with(ltrim(str_replace('\\', '/', $prefix), '/'), 'disc-contents/');
     }
 
+    /**
+     * "disc-contents" or "package", from the media data. The item page lists a dump's own package
+     * before its disc contents, whatever the media order (dip-gallery.js reads data-dip-kind).
+     */
+    public static function packageKind(array $mediaData): string
+    {
+        return self::isDiscContentsPrefix((string) ($mediaData['package_storage_prefix'] ?? ''))
+            ? 'disc-contents'
+            : 'package';
+    }
+
+    /**
+     * @return array{0: string, 1: string} absolute path and mime
+     */
     public function resolvePreviewFile(MediaRepresentation $media, string $type): array
     {
         if (!DipPackageMedia::isDipPackage($media->renderer())) {

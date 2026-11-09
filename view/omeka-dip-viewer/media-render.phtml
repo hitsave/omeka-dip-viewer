@@ -5,7 +5,7 @@ $mediaId = $media->id();
 $itemId = (int) $media->item()->id();
 $siteSlug = $siteSlug ?? null;
 ?>
-<div class="omeka-dip-package">
+<div class="omeka-dip-package" data-dip-kind="<?= $escape($packageKind ?? 'package') ?>">
     <div class="omeka-dip-package__media">
 <?php if (!empty($galleryFiles)): ?>
     <?= $this->partial('omeka-dip-viewer/partials/gallery', [
