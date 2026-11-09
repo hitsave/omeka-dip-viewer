@@ -128,6 +128,26 @@ class DipBrowsePreviewService
     }
 
     /**
+     * Packaged still of the first video that has one, for a package without images: the poster
+     * frame (grid thumbnail) on cards, the contact sheet (display image) for "large" link
+     * previews, each falling back to the other. Null when no video has a still.
+     */
+    public static function videoStillPath(array $manifest, string $type): ?string
+    {
+        $grid = is_array($manifest['grid'] ?? null) ? $manifest['grid'] : [];
+        $display = is_array($manifest['display'] ?? null) ? $manifest['display'] : [];
+        [$first, $second] = $type === 'large' ? [$display, $grid] : [$grid, $display];
+        foreach ((array) ($manifest['video_file_keys'] ?? []) as $key) {
+            $path = $first[(string) $key] ?? $second[(string) $key] ?? null;
+            if (is_string($path) && $path !== '') {
+                return $path;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * @return array{0: string, 1: string} absolute path and mime
      */
     public function resolvePreviewFile(MediaRepresentation $media, string $type): array
@@ -167,6 +187,11 @@ class DipBrowsePreviewService
         if ($galleryFiles === []) {
             if ($fallback) {
                 return $this->resolvePackagedBrowseFile($media, $s3Bucket, $s3Prefix, (string) $fallback);
+            }
+            // No images at all (e.g. a disc whose contents are one trailer): a still of its video.
+            $still = is_array($manifest) ? self::videoStillPath($manifest, $typeKey) : null;
+            if ($still !== null) {
+                return $this->resolvePackagedBrowseFile($media, $s3Bucket, $s3Prefix, $still);
             }
             throw new \RuntimeException('No gallery-eligible images in DIP.');
         }
