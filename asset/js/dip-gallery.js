@@ -504,24 +504,6 @@
         });
     }
 
-    function promoteDipMediaToFullWidth() {
-        var stack = document.querySelector('.stack');
-        if (!stack || stack.querySelector('.full-width-main .omeka-dip-package')) {
-            return;
-        }
-        // Disc contents stay in the media column beside the package tree.
-        var mediaCol = stack.querySelector(
-            '.omeka-dip-package:not([data-dip-kind="disc-contents"]) > .omeka-dip-package__media'
-        );
-        if (!mediaCol || !mediaCol.querySelector('.omeka-dip-gallery')) {
-            return;
-        }
-        var wrap = document.createElement('div');
-        wrap.className = 'full-width-main omeka-dip-promoted-full-width';
-        stack.insertBefore(wrap, stack.firstChild);
-        wrap.appendChild(mediaCol);
-    }
-
     function isDisplayableImageUrl(url) {
         return /\.(jpe?g|png|gif|webp|avif|bmp)(\?|#|$)/i.test(url || '');
     }
@@ -750,7 +732,6 @@
     function boot() {
         bindPackageTree();
         listDiscContentsLast();
-        promoteDipMediaToFullWidth();
         mergeNativeMediaIntoDipGallery();
         buildNativeMediaGalleryFromEmbeds();
         document.querySelectorAll('.omeka-dip-gallery').forEach(initGallery);
