@@ -48,6 +48,12 @@ body.item.resource.show.omeka-dip-item-layout .omeka-dip-folder-name {
     font-weight: 600;
 }
 
+/* Long file and folder names wrap inside the pane instead of running past its edge. */
+body.item.resource.show.omeka-dip-item-layout .omeka-dip-file,
+body.item.resource.show.omeka-dip-item-layout .omeka-dip-folder-name {
+    overflow-wrap: anywhere;
+}
+
 body.item.resource.show.omeka-dip-item-layout .omeka-dip-tree .omeka-dip-tree {
     margin-top: 0.15rem;
 }
@@ -100,11 +106,6 @@ body.item.resource.show.omeka-dip-item-layout .omeka-dip-size {
 
 .omeka-dip-gallery {
     margin-bottom: 1.5rem;
-}
-
-/* Dump packaged previews (often a single DVD menu still). */
-.omeka-dip-promoted-full-width {
-    margin-bottom: 1.25rem;
 }
 
 .omeka-dip-packaged-previews.omeka-dip-gallery--count-1 .omeka-dip-embla__slide {
